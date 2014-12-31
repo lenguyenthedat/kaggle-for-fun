@@ -53,6 +53,13 @@ for col in ['site_category','app_id','app_domain','app_category','device_model']
     train[col] = le.transform(train[col])
     test[col] = le.transform(test[col])
 
+# Stochastic Gradient Descent is sensitive to feature scaling, so it is highly recommended to scale your data.
+for col in ['C1','banner_pos','device_type','device_conn_type','C14','C15','C16','C17','C18','C19','C20','C21']:
+    scaler = StandardScaler()
+    scaler.fit(train[col])
+    train[col] = scaler.transform(train[col])
+    test[col] = scaler.transform(test[col])
+
 # Define regressors
 if sample:
     regressors = [
