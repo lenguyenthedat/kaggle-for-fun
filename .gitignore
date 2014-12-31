@@ -1,1 +1,3 @@
-data/
+train.gz
+test.gz
+result
