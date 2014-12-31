@@ -10,16 +10,19 @@ from sklearn.qda import QDA
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeRegressor
 
-# To run with 100k data
-df = pd.read_csv('./data/train-100000')
-df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
-train, test = df[df['is_train']==True], df[df['is_train']==False]
-
-# To run with real data
-# train = pd.read_csv('./data/train.gz',compression='gzip')
-# test = pd.read_csv('./data/test.gz',compression='gzip')
-
+sample = True
 features = ["C1","banner_pos","device_type","device_conn_type","C14","C15","C16","C17","C18","C19","C20","C21","site_category","app_id", "app_domain","app_category","device_model"]
+
+if sample:
+    #To run with 100k data
+    df = pd.read_csv('./data/train-100000')
+    df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
+    train, test = df[df['is_train']==True], df[df['is_train']==False]
+else:
+    # To run with real data
+    train = pd.read_csv('./data/train.gz',compression='gzip')
+    test = pd.read_csv('./data/test.gz',compression='gzip')
+
 
 # Pre-processing non-number values
 from sklearn import preprocessing
@@ -50,14 +53,16 @@ for regressor in regressors:
     print "  -> Training time:", time.time() - start
 
 # Evaluation and export result
-for regressor in regressors:
-    print regressor.__class__.__name__
-    print np.sqrt(sum(pow(test.click - regressor.predict(test[features]),2)) / float(len(test)))
-    predictions = np.column_stack((test["id"],regressor.predict(test[features])))
-    
-    csvfile = "result/" + regressor.__class__.__name__ + "-submit.csv"
-    with open(csvfile, "w") as output:
-        writer = csv.writer(output, lineterminator='\n')
-        writer.writerow(["id","click"])
-        writer.writerows(predictions)
+if sample:
+    for regressor in regressors:
+        print regressor.__class__.__name__
+        print np.sqrt(sum(pow(test.click - regressor.predict(test[features]),2)) / float(len(test)))
 
+else: # Export result
+    for regressor in regressors:
+        predictions = np.column_stack((test["id"],regressor.predict(test[features])))
+        csvfile = "result/" + regressor.__class__.__name__ + "-submit.csv"
+        with open(csvfile, "w") as output:
+            writer = csv.writer(output, lineterminator='\n')
+            writer.writerow(["id","click"])
+            writer.writerows(predictions)
