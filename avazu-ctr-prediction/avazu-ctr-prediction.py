@@ -83,13 +83,13 @@ if sample:
         QDA(),
         GaussianNB(),
         DecisionTreeRegressor(),
-        GradientBoostingRegressor(),
-        SGDRegressor(n_iter=30,verbose=5,learning_rate='invscaling',eta0=0.000000001)
+        GradientBoostingRegressor(),0
+        SGDRegressor(n_iter=30,verbose=5,learning_rate='invscaling',eta0=0.0000000001)
     ]
 else:
     regressors = [# Other methods are underperformed yet take very long training time for this data set
-        GradientBoostingRegressor(),
-        SGDRegressor(n_iter=30,verbose=5,learning_rate='invscaling',eta0=0.000000001)
+        GradientBoostingRegressor(), # takes ~5 hours to train on a 16GB i5 machine.
+        SGDRegressor(n_iter=30,verbose=5,learning_rate='invscaling',eta0=0.0000000001)
     ]
 
 # Train
