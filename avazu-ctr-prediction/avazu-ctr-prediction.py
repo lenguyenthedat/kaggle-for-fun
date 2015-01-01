@@ -4,7 +4,7 @@ import csv
 import numpy as np
 import scipy as sp
 from sklearn.linear_model import SGDRegressor
-from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor
+from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor, GradientBoostingRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.lda import LDA
 from sklearn.qda import QDA
@@ -15,7 +15,7 @@ from sklearn.preprocessing import StandardScaler
 sample = True
 random = False # disable for testing performance purpose i.e fix train and test dataset.
 
-features = ['C1','banner_pos','device_type','device_conn_type','C14','C15','C16','C17','C18','C19','C20','C21','site_category','app_id', 'app_domain','app_category','device_model']
+features = ['hour','day','dow','C1','banner_pos','device_type','device_conn_type','C14','C15','C16','C17','C18','C19','C20','C21','site_id','site_domain','site_category','app_id', 'app_domain','app_category','device_model','device_id','device_ip']
 
 # logloss implementation
 def logloss(act, pred):
@@ -49,12 +49,11 @@ else:
     train = pd.read_csv('./data/train.gz',compression='gzip')
     test = pd.read_csv('./data/test.gz',compression='gzip')
 
-
 # Pre-processing non-number values
 from sklearn import preprocessing
 le = preprocessing.LabelEncoder()
 
-for col in ['site_category','app_id','app_domain','app_category','device_model']:
+for col in ['site_id','site_domain','site_category','app_id','app_domain','app_category','device_model','device_id','device_ip']:
     le.fit(list(train[col])+list(test[col]))
     train[col] = le.transform(train[col])
     test[col] = le.transform(test[col])
@@ -62,9 +61,17 @@ for col in ['site_category','app_id','app_domain','app_category','device_model']
 # Stochastic Gradient Descent is sensitive to feature scaling, so it is highly recommended to scale your data.
 for col in ['C1','banner_pos','device_type','device_conn_type','C14','C15','C16','C17','C18','C19','C20','C21']:
     scaler = StandardScaler()
-    scaler.fit(train[col])
+    scaler.fit(list(train[col])+list(test[col]))
     train[col] = scaler.transform(train[col])
     test[col] = scaler.transform(test[col])
+
+# Add new features:
+train['day'] = train['hour'].apply(lambda x: (x - x%10000)/1000000) # day
+train['dow'] = train['hour'].apply(lambda x: ((x - x%10000)/1000000)%7) # day of week
+train['hour'] = train['hour'].apply(lambda x: x%10000/100) # hour
+test['day'] = test['hour'].apply(lambda x: (x - x%10000)/1000000) # day
+test['dow'] = test['hour'].apply(lambda x: ((x - x%10000)/1000000)%7) # day of week
+test['hour'] = test['hour'].apply(lambda x: x%10000/100) # hour
 
 # Define regressors
 if sample:
@@ -76,11 +83,13 @@ if sample:
         QDA(),
         GaussianNB(),
         DecisionTreeRegressor(),
-        SGDRegressor(n_iter=15,verbose=5, learning_rate='invscaling',eta0=0.0000000001)
+        GradientBoostingRegressor(),
+        SGDRegressor(n_iter=30,verbose=5,learning_rate='invscaling',eta0=0.000000001)
     ]
 else:
     regressors = [# Other methods are underperformed yet take very long training time for this data set
-        SGDRegressor(n_iter=15,verbose=5, learning_rate='invscaling',eta0=0.0000000001)
+        GradientBoostingRegressor(),
+        SGDRegressor(n_iter=30,verbose=5,learning_rate='invscaling',eta0=0.000000001)
     ]
 
 # Train
