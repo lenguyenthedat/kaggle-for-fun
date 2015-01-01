@@ -13,6 +13,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.preprocessing import StandardScaler
 
 sample = True
+random = False # disable for testing performance purpose i.e fix train and test dataset.
 
 features = ['C1','banner_pos','device_type','device_conn_type','C14','C15','C16','C17','C18','C19','C20','C21','site_category','app_id', 'app_domain','app_category','device_model']
 
@@ -35,9 +36,14 @@ def logloss(act, pred):
 # Load data
 if sample:
     #To run with 100k data
-    df = pd.read_csv('./data/train-100000')
-    df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
-    train, test = df[df['is_train']==True], df[df['is_train']==False]
+    if random:
+        df = pd.read_csv('./data/train-100000')
+        df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
+        train, test = df[df['is_train']==True], df[df['is_train']==False]
+    else:
+        train = pd.read_csv('./data/train-100000R')
+        test = pd.read_csv('./data/test-100000R')
+
 else:
     # To run with real data
     train = pd.read_csv('./data/train.gz',compression='gzip')
