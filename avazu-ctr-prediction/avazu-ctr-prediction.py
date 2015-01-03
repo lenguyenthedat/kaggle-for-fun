@@ -83,7 +83,7 @@ if sample:
         QDA(),
         GaussianNB(),
         DecisionTreeRegressor(),
-        GradientBoostingRegressor(),0
+        GradientBoostingRegressor(),
         SGDRegressor(n_iter=30,verbose=5,learning_rate='invscaling',eta0=0.0000000001)
     ]
 else:
