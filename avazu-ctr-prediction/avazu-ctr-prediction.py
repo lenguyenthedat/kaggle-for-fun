@@ -3,6 +3,7 @@ import time
 import csv
 import numpy as np
 import scipy as sp
+from sklearn.metrics import log_loss
 from sklearn.linear_model import SGDRegressor
 from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor, GradientBoostingRegressor
 from sklearn.neighbors import KNeighborsRegressor
@@ -16,22 +17,6 @@ sample = True
 random = False # disable for testing performance purpose i.e fix train and test dataset.
 
 features = ['hour','day','dow','C1','banner_pos','device_type','device_conn_type','C14','C15','C16','C17','C18','C19','C20','C21','site_id','site_domain','site_category','app_id', 'app_domain','app_category','device_model','device_id','device_ip']
-
-# logloss implementation
-def logloss(act, pred):
-    ' Vectorised computation of logloss '
-
-    #cap in official Kaggle implementation,
-    #per forums/t/1576/r-code-for-logloss
-    epsilon = 1e-15
-    pred = sp.maximum(epsilon, pred)
-    pred = sp.minimum(1-epsilon, pred)
-
-    #compute logloss function (vectorised)
-    ll = sum(   act*sp.log(pred) +
-                sp.subtract(1,act)*sp.log(sp.subtract(1,pred)))
-    ll = ll * -1.0/len(act)
-    return ll
 
 # Load data
 if sample:
@@ -103,7 +88,7 @@ for regressor in regressors:
 if sample:
     for regressor in regressors:
         print regressor.__class__.__name__
-        print logloss(test.click,regressor.predict(test[features]))
+        print log_loss(test.click,regressor.predict(test[features]))
 
 else: # Export result
     for regressor in regressors:
