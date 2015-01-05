@@ -4,13 +4,12 @@ import csv
 import numpy as np
 import scipy as sp
 from sklearn.metrics import log_loss
-from sklearn.linear_model import SGDRegressor
-from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor, GradientBoostingRegressor
-from sklearn.neighbors import KNeighborsRegressor
+from sklearn.linear_model import SGDClassifier
+from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier, GradientBoostingClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.lda import LDA
-from sklearn.qda import QDA
 from sklearn.naive_bayes import GaussianNB
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import StandardScaler
 
 sample = True
@@ -58,42 +57,41 @@ test['day'] = test['hour'].apply(lambda x: (x - x%10000)/1000000) # day
 test['dow'] = test['hour'].apply(lambda x: ((x - x%10000)/1000000)%7) # day of week
 test['hour'] = test['hour'].apply(lambda x: x%10000/100) # hour
 
-# Define regressors
+# Define classifiers
 if sample:
-    regressors = [
-        ExtraTreesRegressor(n_estimators=10),
-        RandomForestRegressor(n_estimators=10),
-        KNeighborsRegressor(10),
+    classifiers = [
+        ExtraTreesClassifier(n_estimators=100),
+        RandomForestClassifier(n_estimators=100),
+        KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=2, metric='minkowski', metric_params=None),
         LDA(),
-        QDA(),
         GaussianNB(),
-        DecisionTreeRegressor(),
-        GradientBoostingRegressor(),
-        SGDRegressor(n_iter=30,verbose=5,learning_rate='invscaling',eta0=0.0000000001)
+        DecisionTreeClassifier(),
+        GradientBoostingClassifier(),
+        SGDClassifier(loss='log',n_iter=30,verbose=5,learning_rate='invscaling',eta0=0.0000000001)
     ]
 else:
-    regressors = [# Other methods are underperformed yet take very long training time for this data set
-        GradientBoostingRegressor(), # takes ~5 hours to train on a 16GB i5 machine.
-        SGDRegressor(n_iter=30,verbose=5,learning_rate='invscaling',eta0=0.0000000001)
+    classifiers = [# Other methods are underperformed yet take very long training time for this data set
+        GradientBoostingClassifier(), # takes ~5 hours to train on a 16GB i5 machine.
+        SGDClassifier(loss='log',n_iter=30,verbose=5,learning_rate='invscaling',eta0=0.0000000001)
     ]
 
 # Train
-for regressor in regressors:
-    print regressor.__class__.__name__
+for classifier in classifiers:
+    print classifier.__class__.__name__
     start = time.time()
-    regressor.fit(train[list(features)], train.click)
+    classifier.fit(train[list(features)], train.click)
     print '  -> Training time:', time.time() - start
 
 # Evaluation and export result
 if sample:
-    for regressor in regressors:
-        print regressor.__class__.__name__
-        print log_loss(test.click,regressor.predict(test[features]))
+    for classifier in classifiers:
+        print classifier.__class__.__name__
+        print log_loss(test.click,classifier.predict_proba(test[features]))
 
 else: # Export result
-    for regressor in regressors:
-        predictions = np.column_stack((test['id'],regressor.predict(test[features])))
-        csvfile = 'result/' + regressor.__class__.__name__ + '-submit.csv'
+    for classifier in Classifiers:
+        predictions = np.column_stack((test['id'],classifier.predict_proba(test[features])))
+        csvfile = 'result/' + classifier.__class__.__name__ + '-submit.csv'
         with open(csvfile, 'w') as output:
             writer = csv.writer(output, lineterminator='\n')
             writer.writerow(['id','click'])
