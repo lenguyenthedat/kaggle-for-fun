@@ -86,11 +86,11 @@ for classifier in classifiers:
 if sample:
     for classifier in classifiers:
         print classifier.__class__.__name__
-        print log_loss(test.click,classifier.predict_proba(test[features]))
+        print log_loss(test.click,np.compress([False, True], classifier.predict_proba(test[features]), axis=1))
 
-else: # Export result
-    for classifier in Classifiers:
-        predictions = np.column_stack((test['id'],classifier.predict_proba(test[features])))
+# else: # Export result
+    for classifier in classifiers:
+        predictions = np.column_stack((test['id'],np.compress([False, True], classifier.predict_proba(test[features]), axis=1)))
         csvfile = 'result/' + classifier.__class__.__name__ + '-submit.csv'
         with open(csvfile, 'w') as output:
             writer = csv.writer(output, lineterminator='\n')
