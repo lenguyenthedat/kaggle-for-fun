@@ -88,7 +88,7 @@ if sample:
         print classifier.__class__.__name__
         print log_loss(test.click,np.compress([False, True], classifier.predict_proba(test[features]), axis=1))
 
-# else: # Export result
+else: # Export result
     for classifier in classifiers:
         predictions = np.column_stack((test['id'],np.compress([False, True], classifier.predict_proba(test[features]), axis=1)))
         csvfile = 'result/' + classifier.__class__.__name__ + '-submit.csv'
