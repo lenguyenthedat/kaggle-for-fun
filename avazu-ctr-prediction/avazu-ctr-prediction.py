@@ -57,6 +57,11 @@ test['day'] = test['hour'].apply(lambda x: (x - x%10000)/1000000) # day
 test['dow'] = test['hour'].apply(lambda x: ((x - x%10000)/1000000)%7) # day of week
 test['hour'] = test['hour'].apply(lambda x: x%10000/100) # hour
 
+# Remove outliner
+for col in ['C18','C20','C21']:
+    train = train[np.abs(train[col]-train[col].mean())<=(3*train[col].std())] #keep only the ones that are within +3 to -3 standard deviations in the column col,
+    train = train[~(np.abs(train[col]-train[col].mean())>(3*train[col].std()))] #or if you prefer the other way around
+
 # Define classifiers
 if sample:
     classifiers = [
