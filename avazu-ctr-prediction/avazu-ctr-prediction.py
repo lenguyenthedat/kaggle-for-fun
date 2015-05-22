@@ -3,7 +3,7 @@ import time
 import csv
 import numpy as np
 import os
-from sklearn.metrics import log_loss
+from sklearn.metrics import log_loss, mean_squared_error
 from sklearn.linear_model import SGDClassifier
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier, GradientBoostingClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -99,7 +99,10 @@ for classifier in classifiers:
 if sample:
     for classifier in classifiers:
         print classifier.__class__.__name__
+        print 'Log Loss:'
         print log_loss(test.click.values, classifier.predict_proba(test[features]))
+        print 'RMSE:'
+        print mean_squared_error(test.click.values, np.compress([False, True], classifier.predict_proba(test[features]), axis=1))**0.5 # RMSE
 
 else: # Export result
     for classifier in classifiers:
