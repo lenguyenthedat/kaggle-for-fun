@@ -2,7 +2,6 @@ import pandas as pd
 import time
 import csv
 import numpy as np
-import scipy as sp
 import os
 from sklearn.metrics import log_loss
 from sklearn.linear_model import SGDClassifier
@@ -19,7 +18,10 @@ sample = True
 random = True
 # random = False # disable for testing performance purpose i.e fix train and test dataset.
 
-features = ['hour','day','dow','C1','banner_pos','device_type','device_conn_type','C14','C15','C16','C17','C18','C19','C20','C21','site_id','site_domain','site_category','app_id', 'app_domain','app_category','device_model','device_id','device_ip']
+features = ['hour','day','dow','C1','banner_pos','device_type','device_conn_type',
+            'C14','C15','C16','C17','C18','C19','C20','C21','site_id','site_domain',
+            'site_category','app_id', 'app_domain','app_category','device_model',
+            'device_id','device_ip']
 
 # Load data
 if sample:
@@ -63,8 +65,10 @@ test['hour'] = test['hour'].apply(lambda x: x%10000/100) # hour
 
 # Remove outliner
 for col in ['C18','C20','C21']:
-    train = train[np.abs(train[col]-train[col].mean())<=(3*train[col].std())] #keep only the ones that are within +3 to -3 standard deviations in the column col,
-    train = train[~(np.abs(train[col]-train[col].mean())>(3*train[col].std()))] #or if you prefer the other way around
+    # keep only the ones that are within +3 to -3 standard deviations in the column col,
+    train = train[np.abs(train[col]-train[col].mean())<=(3*train[col].std())]
+    # or if you prefer the other way around
+    train = train[~(np.abs(train[col]-train[col].mean())>(3*train[col].std()))]
 
 # Define classifiers
 if sample:
