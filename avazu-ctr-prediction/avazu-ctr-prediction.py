@@ -3,6 +3,7 @@ import time
 import csv
 import numpy as np
 import scipy as sp
+import os
 from sklearn.metrics import log_loss
 from sklearn.linear_model import SGDClassifier
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier, GradientBoostingClassifier
@@ -12,8 +13,11 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import StandardScaler
 
+pd.options.mode.chained_assignment = None
+
 sample = True
-random = False # disable for testing performance purpose i.e fix train and test dataset.
+random = True
+# random = False # disable for testing performance purpose i.e fix train and test dataset.
 
 features = ['hour','day','dow','C1','banner_pos','device_type','device_conn_type','C14','C15','C16','C17','C18','C19','C20','C21','site_id','site_domain','site_category','app_id', 'app_domain','app_category','device_model','device_id','device_ip']
 
@@ -21,12 +25,12 @@ features = ['hour','day','dow','C1','banner_pos','device_type','device_conn_type
 if sample:
     #To run with 100k data
     if random:
-        df = pd.read_csv('./data/train-100000')
+        df = pd.read_csv('./data/train-100000',dtype={'id':pd.np.string_})
         df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
         train, test = df[df['is_train']==True], df[df['is_train']==False]
     else:
-        train = pd.read_csv('./data/train-100000R')
-        test = pd.read_csv('./data/test-100000R')
+        train = pd.read_csv('./data/train-100000R',dtype={'id':pd.np.string_})
+        test = pd.read_csv('./data/test-100000R',dtype={'id':pd.np.string_})
 
 else:
     # To run with real data
@@ -67,7 +71,7 @@ if sample:
     classifiers = [
         ExtraTreesClassifier(n_estimators=100),
         RandomForestClassifier(n_estimators=100),
-        KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=2, metric='minkowski', metric_params=None),
+        KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=2, metric='minkowski'),
         LDA(),
         GaussianNB(),
         DecisionTreeClassifier(),
@@ -91,10 +95,12 @@ for classifier in classifiers:
 if sample:
     for classifier in classifiers:
         print classifier.__class__.__name__
-        print log_loss(test.click,np.compress([False, True], classifier.predict_proba(test[features]), axis=1))
+        print log_loss(test.click.values, classifier.predict_proba(test[features]))
 
 else: # Export result
     for classifier in classifiers:
+        if not os.path.exists('result/'):
+            os.makedirs('result/')
         predictions = np.column_stack((test['id'],np.compress([False, True], classifier.predict_proba(test[features]), axis=1)))
         csvfile = 'result/' + classifier.__class__.__name__ + '-submit.csv'
         with open(csvfile, 'w') as output:
