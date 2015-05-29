@@ -15,8 +15,7 @@ from sklearn.preprocessing import StandardScaler
 pd.options.mode.chained_assignment = None
 
 sample = True
-random = True
-# random = False # disable for testing performance purpose i.e fix train and test dataset.
+random = False # disable for testing performance purpose i.e fix train and test dataset.
 
 features = ['hour','day','dow','C1','banner_pos','device_type','device_conn_type',
             'C14','C15','C16','C17','C18','C19','C20','C21','site_id','site_domain',
@@ -24,13 +23,12 @@ features = ['hour','day','dow','C1','banner_pos','device_type','device_conn_type
             'device_id','device_ip']
 
 # Load data
-if sample:
-    #To run with 100k data
+if sample: # To run with 100k data
     if random:
         df = pd.read_csv('./data/train-100000',dtype={'id':pd.np.string_})
         df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
         train, test = df[df['is_train']==True], df[df['is_train']==False]
-    else:
+    else: # Use data set that is pre-randomized and splitted.
         train = pd.read_csv('./data/train-100000R',dtype={'id':pd.np.string_})
         test = pd.read_csv('./data/test-100000R',dtype={'id':pd.np.string_})
 
