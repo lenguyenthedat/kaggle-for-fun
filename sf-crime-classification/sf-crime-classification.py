@@ -11,7 +11,7 @@ from functools import partial
 
 pd.options.mode.chained_assignment = None
 
-sample = False
+sample = True
 random = False # disable for testing performance purpose i.e fix train and test dataset.
 
 features = ['Dates','DayOfWeek','PdDistrict','Address','X','Y']
