@@ -60,14 +60,14 @@ for col in features_non_numeric:
 # Define classifiers
 if sample:
     classifiers = [
-        AdaBoostClassifier(DecisionTreeClassifier(max_depth=1),
-                         algorithm="SAMME",
+        AdaBoostClassifier(DecisionTreeClassifier(max_depth=20),
+                         algorithm="SAMME.R",
                          n_estimators=10)
     ]
 else:
     classifiers = [# Other methods are underperformed yet take very long training time for this data set
-        AdaBoostClassifier(DecisionTreeClassifier(max_depth=1),
-                         algorithm="SAMME",
+        AdaBoostClassifier(DecisionTreeClassifier(max_depth=20),
+                         algorithm="SAMME.R",
                          n_estimators=10)
     ]
 
