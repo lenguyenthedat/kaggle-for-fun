@@ -5,7 +5,7 @@ import numpy as np
 import os
 from sklearn.metrics import log_loss, mean_squared_error
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier
 from sklearn.preprocessing import LabelEncoder
 from functools import partial
 
@@ -28,13 +28,12 @@ categories = ['ARSON','ASSAULT','BAD CHECKS','BRIBERY','BURGLARY','DISORDERLY CO
 # Load data
 if sample: # To run with 100k data
     if random:
-        df = pd.read_csv('./data/train-100000',dtype={'Dates':pd.np.string_,'Category':pd.np.string_})
+        df = pd.read_csv('./data/train-100000',dtype={'Category':pd.np.string_})
         df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
         train, test = df[df['is_train']==True], df[df['is_train']==False]
     else: # Use data set that is pre-randomized and splitted.
-        train = pd.read_csv('./data/train-100000R',dtype={'Dates':pd.np.string_,'Category':pd.np.string_})
-        test = pd.read_csv('./data/test-100000R',dtype={'Dates':pd.np.string_,'Category':pd.np.string_})
-
+        train = pd.read_csv('./data/train-100000R',dtype={'Category':pd.np.string_})
+        test = pd.read_csv('./data/test-100000R',dtype={'Category':pd.np.string_})
 else:
     # To run with real data
     train = pd.read_csv('./data/train.csv')
@@ -48,25 +47,27 @@ for col in features_non_numeric:
     test[col] = le.transform(test[col])
 
 # Add new features:
-# train['year'] = train['Dates'].apply(lambda x: x[:4])
-# train['month'] = train['Dates'].apply(lambda x: x[5:7])
-# train['day'] = train['Dates'].apply(lambda x: x[8:10])
-# train['hour'] = train['Dates'].apply(lambda x: x[11:13])
-# test['year'] = test['Dates'].apply(lambda x: x[:4])
-# test['month'] = test['Dates'].apply(lambda x: x[5:7])
-# test['day'] = test['Dates'].apply(lambda x: x[8:10])
-# test['hour'] = test['Dates'].apply(lambda x: x[11:13])
+train['year'] = train['Dates'].apply(lambda x: x[:4] if x.size > 4 else None)
+train['month'] = train['Dates'].apply(lambda x: x[5:7] if x.size > 4 else None)
+train['day'] = train['Dates'].apply(lambda x: x[8:10] if x.size > 4 else None)
+train['hour'] = train['Dates'].apply(lambda x: x[11:13] if x.size > 4 else None)
+test['year'] = test['Dates'].apply(lambda x: x[:4] if x.size > 4 else None)
+test['month'] = test['Dates'].apply(lambda x: x[5:7] if x.size > 4 else None)
+test['day'] = test['Dates'].apply(lambda x: x[8:10] if x.size > 4 else None)
+test['hour'] = test['Dates'].apply(lambda x: x[11:13] if x.size > 4 else None)
 
 # Define classifiers
 if sample:
     classifiers = [
-        AdaBoostClassifier(DecisionTreeClassifier(max_depth=20),
+        # RandomForestClassifier(n_estimators=10),
+        AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20),
                          algorithm="SAMME.R",
-                         n_estimators=10)
+                         n_estimators=10),
+        GradientBoostingClassifier(n_estimators=10, learning_rate=1.0,max_depth=20, random_state=0)
     ]
 else:
     classifiers = [# Other methods are underperformed yet take very long training time for this data set
-        AdaBoostClassifier(DecisionTreeClassifier(max_depth=20),
+        AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20),
                          algorithm="SAMME.R",
                          n_estimators=10)
     ]
