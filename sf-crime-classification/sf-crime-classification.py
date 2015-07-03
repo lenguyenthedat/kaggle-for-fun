@@ -5,8 +5,10 @@ import numpy as np
 import os
 from sklearn.metrics import log_loss, mean_squared_error
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
+
 from functools import partial
 
 pd.options.mode.chained_assignment = None
@@ -47,23 +49,25 @@ for col in features_non_numeric:
     test[col] = le.transform(test[col])
 
 # Add new features:
-train['year'] = train['Dates'].apply(lambda x: x[:4] if x.size > 4 else None)
-train['month'] = train['Dates'].apply(lambda x: x[5:7] if x.size > 4 else None)
-train['day'] = train['Dates'].apply(lambda x: x[8:10] if x.size > 4 else None)
-train['hour'] = train['Dates'].apply(lambda x: x[11:13] if x.size > 4 else None)
-test['year'] = test['Dates'].apply(lambda x: x[:4] if x.size > 4 else None)
-test['month'] = test['Dates'].apply(lambda x: x[5:7] if x.size > 4 else None)
-test['day'] = test['Dates'].apply(lambda x: x[8:10] if x.size > 4 else None)
-test['hour'] = test['Dates'].apply(lambda x: x[11:13] if x.size > 4 else None)
-
+features = ['Dates','year','month','day','hour','DayOfWeek','PdDistrict','Address','X','Y']
+train['year'] = train['Dates'].apply(lambda x: x[:4] if x.size > 4 else 1800)
+train['month'] = train['Dates'].apply(lambda x: x[5:7] if x.size > 4 else 1)
+train['day'] = train['Dates'].apply(lambda x: x[8:10] if x.size > 4 else 1)
+train['hour'] = train['Dates'].apply(lambda x: x[11:13] if x.size > 4 else 1)
+test['year'] = test['Dates'].apply(lambda x: x[:4] if x.size > 4 else 1800)
+test['month'] = test['Dates'].apply(lambda x: x[5:7] if x.size > 4 else 1)
+test['day'] = test['Dates'].apply(lambda x: x[8:10] if x.size > 4 else 1)
+test['hour'] = test['Dates'].apply(lambda x: x[11:13] if x.size > 4 else 1)
 # Define classifiers
+
 if sample:
     classifiers = [
-        # RandomForestClassifier(n_estimators=10),
+        RandomForestClassifier(n_estimators=100),
         AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20),
                          algorithm="SAMME.R",
                          n_estimators=10),
-        GradientBoostingClassifier(n_estimators=10, learning_rate=1.0,max_depth=20, random_state=0)
+        GradientBoostingClassifier(n_estimators=10, learning_rate=1.0,max_depth=5, random_state=0),
+        KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=10, metric='minkowski')
     ]
 else:
     classifiers = [# Other methods are underperformed yet take very long training time for this data set
@@ -75,9 +79,9 @@ else:
 # Train
 for classifier in classifiers:
     print classifier.__class__.__name__
-
     start = time.time()
-    classifier.fit(train[list(features)], train.Category)
+    classifier.fit(np.array(train[list(features)]), train.Category) # use np.array to avoid this stupid error `IndexError: indices are out-of-bounds`
+                                                                    # ref: http://stackoverflow.com/questions/27332557/dbscan-indices-are-out-of-bounds-python
     # print classifier.classes_ # make sure it's following `features` order
     print '  -> Training time:', time.time() - start
 # Evaluation and export result
@@ -86,7 +90,7 @@ if sample:
     for classifier in classifiers:
         print classifier.__class__.__name__
         print 'Log Loss:'
-        print log_loss(test.Category.values.astype(pd.np.string_), classifier.predict_proba(test[features]))
+        print log_loss(test.Category.values.astype(pd.np.string_), classifier.predict_proba(np.array(test[features])))
 
 else: # Export result
     for classifier in classifiers:
