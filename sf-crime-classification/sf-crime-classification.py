@@ -49,15 +49,20 @@ for col in features:
     test[col] = scaler.transform(test[col])
 
 # Add new features:
-features = ['Dates','year','month','day','hour','DayOfWeek','PdDistrict','Address','X','Y']
-train['year'] = train['Dates'].apply(lambda x: x[:4] if x.size > 4 else 1800)
-train['month'] = train['Dates'].apply(lambda x: x[5:7] if x.size > 4 else 1)
-train['day'] = train['Dates'].apply(lambda x: x[8:10] if x.size > 4 else 1)
-train['hour'] = train['Dates'].apply(lambda x: x[11:13] if x.size > 4 else 1)
-test['year'] = test['Dates'].apply(lambda x: x[:4] if x.size > 4 else 1800)
-test['month'] = test['Dates'].apply(lambda x: x[5:7] if x.size > 4 else 1)
-test['day'] = test['Dates'].apply(lambda x: x[8:10] if x.size > 4 else 1)
-test['hour'] = test['Dates'].apply(lambda x: x[11:13] if x.size > 4 else 1)
+# features = ['Dates','dark','weekend','year','month','day','hour','DayOfWeek','PdDistrict','Address','X','Y']
+# train['year'] = train['Dates'].apply(lambda x: x[:4] if x.size > 4 else 1800)
+# train['month'] = train['Dates'].apply(lambda x: x[5:7] if x.size > 4 else 1)
+# train['day'] = train['Dates'].apply(lambda x: x[8:10] if x.size > 4 else 1)
+# train['hour'] = train['Dates'].apply(lambda x: x[11:13] if x.size > 4 else 1)
+# train['weekend'] = train['DayOfWeek'].apply(lambda x: 1 if (x.size > 4 and x[11:13] >= 18) else 0)
+# train['dark'] = train['DayOfWeek'].apply(lambda x: 1 if x in ['Sunday','Saturday'] else 0)
+# test['year'] = test['Dates'].apply(lambda x: x[:4] if x.size > 4 else 1800)
+# test['month'] = test['Dates'].apply(lambda x: x[5:7] if x.size > 4 else 1)
+# test['day'] = test['Dates'].apply(lambda x: x[8:10] if x.size > 4 else 1)
+# test['hour'] = test['Dates'].apply(lambda x: x[11:13] if x.size > 4 else 1)
+# test['weekend'] = test['DayOfWeek'].apply(lambda x: 1 if x in ['Sunday','Saturday'] else 0)
+# test['dark'] = test['DayOfWeek'].apply(lambda x: 1 if (x.size > 4 and x[11:13] >= 18) else 0)
+
 # Define classifiers
 
 if sample:
@@ -74,7 +79,7 @@ if sample:
                 learning_rate=0.01,
                 learning_rule='momentum',
                 learning_momentum=0.9,
-                batch_size=100,
+                batch_size=1000,
                 valid_size=0.01,
                 # valid_set=(X_test, y_test),
                 n_stable=100,
@@ -93,7 +98,7 @@ else:
                 learning_rate=0.01,
                 learning_rule='momentum',
                 learning_momentum=0.9,
-                batch_size=100,
+                batch_size=1000,
                 valid_size=0.01,
                 # valid_set=(X_test, y_test),
                 n_stable=100,
@@ -125,7 +130,7 @@ else: # Export result
             os.makedirs('result/')
         # TODO: fix this shit
         # test['Id'] values will get converted to float since column_stack will result in array
-        predictions = np.column_stack((test['Id'], classifier.predict_proba(test[features]))).tolist()
+        predictions = np.column_stack((test['Id'], classifier.predict_proba(np.array(test[features])))).tolist()
         predictions = [[int(i[0])] + i[1:] for i in predictions]
         csvfile = 'result/' + classifier.__class__.__name__ + '-submit.csv'
         with open(csvfile, 'w') as output:
