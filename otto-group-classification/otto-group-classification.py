@@ -3,7 +3,7 @@ import time
 import csv
 import numpy as np
 import os
-from sklearn.metrics import log_loss, mean_squared_error
+from sklearn.metrics import log_loss
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
@@ -65,24 +65,24 @@ if sample:
                 verbose=True)
     ]
 else:
-        classifiers = [# Other methods are underperformed yet take very long training time for this data set
-            AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20),
-                         algorithm="SAMME.R",
-                         n_estimators=10),
-            Classifier(
-                layers=[
-                    # Convolution("Rectifier", channels=10, pool_shape=(2,2), kernel_shape=(3, 3)),
-                    Layer('Rectifier', units=200),
-                    Layer('Softmax')],
-                learning_rate=0.01,
-                learning_rule='momentum',
-                learning_momentum=0.9,
-                batch_size=1000,
-                valid_size=0.01,
-                # valid_set=(X_test, y_test),
-                n_stable=100,
-                n_iter=100,
-                verbose=False)
+    classifiers = [# Other methods are underperformed yet take very long training time for this data set
+        AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20),
+                     algorithm="SAMME.R",
+                     n_estimators=10),
+        Classifier(
+            layers=[
+                # Convolution("Rectifier", channels=10, pool_shape=(2,2), kernel_shape=(3, 3)),
+                Layer('Rectifier', units=200),
+                Layer('Softmax')],
+            learning_rate=0.01,
+            learning_rule='momentum',
+            learning_momentum=0.9,
+            batch_size=1000,
+            valid_size=0.01,
+            # valid_set=(X_test, y_test),
+            n_stable=100,
+            n_iter=100,
+            verbose=False)
     ]
 
 # Train
