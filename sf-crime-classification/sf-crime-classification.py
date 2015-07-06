@@ -16,7 +16,22 @@ sample = True
 random = False # disable for testing performance purpose i.e fix train and test dataset.
 
 features = ['Dates','DayOfWeek','PdDistrict','Address','X','Y']
-features_non_numeric = ['Dates','DayOfWeek','PdDistrict','Address']
+features_non_numeric = ['DayOfWeek','PdDistrict','Address']
+
+# Add new features:
+features = ['dark','weekend','year','month','day','hour','DayOfWeek','PdDistrict','Address','X','Y']
+train['year'] = train['Dates'].apply(lambda x: x[:4] if len(x) > 4 else 1800)
+train['month'] = train['Dates'].apply(lambda x: x[5:7] if len(x) > 4 else 1)
+train['day'] = train['Dates'].apply(lambda x: x[8:10] if len(x) > 4 else 1)
+train['hour'] = train['Dates'].apply(lambda x: x[11:13] if len(x) > 4 else 1)
+train['dark'] = train['Dates'].apply(lambda x: 1 if (len(x) > 4 and x[11:13] >= 18) else 0)
+train['weekend'] = train['DayOfWeek'].apply(lambda x: 1 if x in ['Sunday','Saturday'] else 0)
+test['year'] = test['Dates'].apply(lambda x: x[:4] if len(x) > 4 else 1800)
+test['month'] = test['Dates'].apply(lambda x: x[5:7] if len(x) > 4 else 1)
+test['day'] = test['Dates'].apply(lambda x: x[8:10] if len(x) > 4 else 1)
+test['hour'] = test['Dates'].apply(lambda x: x[11:13] if len(x) > 4 else 1)
+test['dark'] = test['Dates'].apply(lambda x: 1 if (len(x) > 4 and x[11:13] >= 18 and x[11:13] < 6) else 0)
+test['weekend'] = test['DayOfWeek'].apply(lambda x: 1 if x in ['Sunday','Saturday'] else 0)
 
 # Load data
 if sample: # To run with 100k data
@@ -39,28 +54,14 @@ for col in features_non_numeric:
     train[col] = le.transform(train[col])
     test[col] = le.transform(test[col])
 
-# Neural Network, Stochastic Gradient Descent is sensitive to feature scaling, so it is highly recommended to scale your data.
-scaler = StandardScaler()
-for col in features:
-    scaler.fit(list(train[col])+list(test[col]))
-    train[col] = scaler.transform(train[col])
-    test[col] = scaler.transform(test[col])
+# # Neural Network, Stochastic Gradient Descent is sensitive to feature scaling, so it is highly recommended to scale your data.
+# scaler = StandardScaler()
+# for col in features:
+#     scaler.fit(list(train[col])+list(test[col]))
+#     train[col] = scaler.transform(train[col])
+#     test[col] = scaler.transform(test[col])
 
-# Add new features:
-# features = ['Dates','dark','weekend','year','month','day','hour','DayOfWeek','PdDistrict','Address','X','Y']
-# train['year'] = train['Dates'].apply(lambda x: x[:4] if x.size > 4 else 1800)
-# train['month'] = train['Dates'].apply(lambda x: x[5:7] if x.size > 4 else 1)
-# train['day'] = train['Dates'].apply(lambda x: x[8:10] if x.size > 4 else 1)
-# train['hour'] = train['Dates'].apply(lambda x: x[11:13] if x.size > 4 else 1)
-# train['weekend'] = train['DayOfWeek'].apply(lambda x: 1 if (x.size > 4 and x[11:13] >= 18) else 0)
-# train['dark'] = train['DayOfWeek'].apply(lambda x: 1 if x in ['Sunday','Saturday'] else 0)
-# test['year'] = test['Dates'].apply(lambda x: x[:4] if x.size > 4 else 1800)
-# test['month'] = test['Dates'].apply(lambda x: x[5:7] if x.size > 4 else 1)
-# test['day'] = test['Dates'].apply(lambda x: x[8:10] if x.size > 4 else 1)
-# test['hour'] = test['Dates'].apply(lambda x: x[11:13] if x.size > 4 else 1)
-# test['weekend'] = test['DayOfWeek'].apply(lambda x: 1 if x in ['Sunday','Saturday'] else 0)
-# test['dark'] = test['DayOfWeek'].apply(lambda x: 1 if (x.size > 4 and x[11:13] >= 18) else 0)
-
+print train[:10]
 # Define classifiers
 
 if sample:
