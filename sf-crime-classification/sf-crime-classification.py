@@ -34,7 +34,9 @@ else:
     train = pd.read_csv('./data/train.csv')
     test = pd.read_csv('./data/test.csv')
 
-features = ['Dates','DayOfWeek','PdDistrict','StreetNo','Address','X','Y']
+features = ['Dates','hour','DayOfWeek','PdDistrict','StreetNo','Address','X','Y']
+train['hour'] = train['Dates'].apply(lambda x: x[11:13] if len(x) > 4 else 12)
+test['hour'] = test['Dates'].apply(lambda x: x[11:13] if len(x) > 4 else 12)
 train['StreetNo'] = train['Address'].apply(lambda x: x.split(' ', 1)[0] if x.split(' ', 1)[0].isdigit() else 0)
 train['Address'] = train['Address'].apply(lambda x: x.split(' ', 1)[1] if x.split(' ', 1)[0].isdigit() else x)
 test['StreetNo'] = test['Address'].apply(lambda x: x.split(' ', 1)[0] if x.split(' ', 1)[0].isdigit() else 0)
