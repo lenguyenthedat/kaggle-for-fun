@@ -35,19 +35,24 @@ else:
     test = pd.read_csv('./data/test.csv')
 
 # Add new features:
-features = ['dark','weekend','year','month','day','hour','DayOfWeek','PdDistrict','Address','X','Y']
+features = ['year','month','day','hour','DayOfWeek','PdDistrict','StreetNo','Address','X','Y']
 train['year'] = train['Dates'].apply(lambda x: x[:4] if len(x) > 4 else 2010)
 train['month'] = train['Dates'].apply(lambda x: x[5:7] if len(x) > 4 else 6)
 train['day'] = train['Dates'].apply(lambda x: x[8:10] if len(x) > 4 else 15)
 train['hour'] = train['Dates'].apply(lambda x: x[11:13] if len(x) > 4 else 12)
 train['dark'] = train['Dates'].apply(lambda x: 1 if (len(x) > 4 and x[11:13] >= 18 and x[11:13] < 6) else 0)
 train['weekend'] = train['DayOfWeek'].apply(lambda x: 1 if x in ['Sunday','Saturday'] else 0)
+train['StreetNo'] = train['Address'].apply(lambda x: x.split(' ', 1)[0] if x.split(' ', 1)[0].isdigit() else 0)
+train['Address'] = train['Address'].apply(lambda x: x.split(' ', 1)[1] if x.split(' ', 1)[0].isdigit() else x)
 test['year'] = test['Dates'].apply(lambda x: x[:4] if len(x) > 4 else 2010)
 test['month'] = test['Dates'].apply(lambda x: x[5:7] if len(x) > 4 else 6)
 test['day'] = test['Dates'].apply(lambda x: x[8:10] if len(x) > 4 else 15)
 test['hour'] = test['Dates'].apply(lambda x: x[11:13] if len(x) > 4 else 12)
 test['dark'] = test['Dates'].apply(lambda x: 1 if (len(x) > 4 and x[11:13] >= 18 and x[11:13] < 6) else 0)
 test['weekend'] = test['DayOfWeek'].apply(lambda x: 1 if x in ['Sunday','Saturday'] else 0)
+test['StreetNo'] = test['Address'].apply(lambda x: x.split(' ', 1)[0] if x.split(' ', 1)[0].isdigit() else 0)
+test['Address'] = test['Address'].apply(lambda x: x.split(' ', 1)[1] if x.split(' ', 1)[0].isdigit() else x)
+# print train[:10] # debug
 
 # Pre-processing non-number values
 le = LabelEncoder()
