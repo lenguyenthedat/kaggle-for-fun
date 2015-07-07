@@ -62,13 +62,14 @@ for col in features:
 
 if sample:
     classifiers = [
-        # RandomForestClassifier(n_estimators=100,verbose=True),
-        # GradientBoostingClassifier(n_estimators=10, learning_rate=1.0,max_depth=5, random_state=0),
-        # KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=10, metric='minkowski'),
-        # AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20), algorithm="SAMME.R", n_estimators=10),
+        RandomForestClassifier(n_estimators=100,verbose=True),
+        GradientBoostingClassifier(n_estimators=10, learning_rate=1.0,max_depth=5, random_state=0),
+        KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=10, metric='minkowski'),
+        AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20), algorithm="SAMME.R", n_estimators=10),
         Classifier(
             layers=[
-                # Convolution("Rectifier", channels=10, pool_shape=(2,2), kernel_shape=(3, 3)),
+                Layer("Tanh", units=200),
+                Layer("Sigmoid", units=200),
                 Layer('Rectifier', units=200),
                 Layer('Softmax')],
             learning_rate=0.01,
@@ -76,7 +77,6 @@ if sample:
             learning_momentum=0.9,
             batch_size=1000,
             valid_size=0.01,
-            # valid_set=(X_test, y_test),
             n_stable=100,
             n_iter=100,
             verbose=True)
@@ -85,7 +85,8 @@ else:
     classifiers = [# Other methods are underperformed yet take very long training time for this data set
         Classifier(
             layers=[
-                # Convolution("Rectifier", channels=10, pool_shape=(2,2), kernel_shape=(3, 3)),
+                Layer("Tanh", units=200),
+                Layer("Sigmoid", units=200),
                 Layer('Rectifier', units=200),
                 Layer('Softmax')],
             learning_rate=0.01,
@@ -93,7 +94,6 @@ else:
             learning_momentum=0.9,
             batch_size=1000,
             valid_size=0.01,
-            # valid_set=(X_test, y_test),
             n_stable=100,
             n_iter=100,
             verbose=True)
