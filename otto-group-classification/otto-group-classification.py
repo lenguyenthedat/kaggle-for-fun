@@ -8,10 +8,11 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
 from sknn.mlp import Classifier, Layer
+from sklearn.preprocessing import StandardScaler
 
 pd.options.mode.chained_assignment = None
 
-sample = True
+sample = False
 
 features = ['feat_1','feat_2','feat_3','feat_4','feat_5','feat_6','feat_7',
             'feat_8','feat_9','feat_10','feat_11','feat_12','feat_13','feat_14',
@@ -39,6 +40,13 @@ else:
     train = pd.read_csv('./data/train.csv')
     test = pd.read_csv('./data/test.csv')
 
+# Neural Network, Stochastic Gradient Descent is sensitive to feature scaling, so it is highly recommended to scale your data.
+scaler = StandardScaler()
+for col in features:
+    scaler.fit(list(train[col])+list(test[col]))
+    train[col] = scaler.transform(train[col])
+    test[col] = scaler.transform(test[col])
+
 # Define classifiers
 
 if sample:
@@ -51,18 +59,18 @@ if sample:
                          n_estimators=10),
         Classifier(
             layers=[
-                # Convolution("Rectifier", channels=10, pool_shape=(2,2), kernel_shape=(3, 3)),
+                Layer("Tanh", units=200),
+                Layer("Sigmoid", units=200),
                 Layer('Rectifier', units=200),
                 Layer('Softmax')],
-                learning_rate=0.01,
-                learning_rule='momentum',
-                learning_momentum=0.9,
-                batch_size=1000,
-                valid_size=0.01,
-                # valid_set=(X_test, y_test),
-                n_stable=100,
-                n_iter=100,
-                verbose=True)
+            learning_rate=0.01,
+            learning_rule='momentum',
+            learning_momentum=0.9,
+            batch_size=1000,
+            valid_size=0.01,
+            n_stable=100,
+            n_iter=100,
+            verbose=True)
     ]
 else:
     classifiers = [# Other methods are underperformed yet take very long training time for this data set
@@ -71,7 +79,8 @@ else:
                      n_estimators=10),
         Classifier(
             layers=[
-                # Convolution("Rectifier", channels=10, pool_shape=(2,2), kernel_shape=(3, 3)),
+                Layer("Tanh", units=200),
+                Layer("Sigmoid", units=200),
                 Layer('Rectifier', units=200),
                 Layer('Softmax')],
             learning_rate=0.01,
@@ -79,10 +88,9 @@ else:
             learning_momentum=0.9,
             batch_size=1000,
             valid_size=0.01,
-            # valid_set=(X_test, y_test),
             n_stable=100,
             n_iter=100,
-            verbose=False)
+            verbose=True)
     ]
 
 # Train
