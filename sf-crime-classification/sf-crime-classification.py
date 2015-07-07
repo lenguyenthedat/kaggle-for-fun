@@ -34,11 +34,15 @@ else:
     train = pd.read_csv('./data/train.csv')
     test = pd.read_csv('./data/test.csv')
 
-features = ['Dates','DayOfWeek','PdDistrict','StreetNo','Address','X','Y']
+features = ['Dates','hour','dark','DayOfWeek','PdDistrict','StreetNo','Address','X','Y']
 train['StreetNo'] = train['Address'].apply(lambda x: x.split(' ', 1)[0] if x.split(' ', 1)[0].isdigit() else 0)
 train['Address'] = train['Address'].apply(lambda x: x.split(' ', 1)[1] if x.split(' ', 1)[0].isdigit() else x)
 test['StreetNo'] = test['Address'].apply(lambda x: x.split(' ', 1)[0] if x.split(' ', 1)[0].isdigit() else 0)
 test['Address'] = test['Address'].apply(lambda x: x.split(' ', 1)[1] if x.split(' ', 1)[0].isdigit() else x)
+train['hour'] = train['Dates'].apply(lambda x: x[11:13] if len(x) > 4 else 12)
+train['dark'] = train['Dates'].apply(lambda x: 1 if (len(x) > 4 and x[11:13] >= 18 and x[11:13] < 6) else 0)
+test['hour'] = test['Dates'].apply(lambda x: x[11:13] if len(x) > 4 else 12)
+test['dark'] = test['Dates'].apply(lambda x: 1 if (len(x) > 4 and x[11:13] >= 18 and x[11:13] < 6) else 0)
 
 # Pre-processing non-number values
 le = LabelEncoder()
