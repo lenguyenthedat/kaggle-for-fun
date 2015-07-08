@@ -9,12 +9,14 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sknn.mlp import Classifier, Layer
-from sklearn.pipeline import Pipeline
 
 pd.options.mode.chained_assignment = None
 
 sample = True
 random = False # disable for testing performance purpose i.e fix train and test dataset.
+
+features = ['DayOfWeek','PdDistrict','Address','X','Y']
+features_non_numeric = ['Dates','DayOfWeek','PdDistrict','Address']
 
 # Load data
 if sample: # To run with 100k data
@@ -40,7 +42,6 @@ train['dark'] = train['Dates'].apply(lambda x: 1 if (len(x) > 4 and x[11:13] >= 
 test['hour'] = test['Dates'].apply(lambda x: x[11:13] if len(x) > 4 else 12)
 test['dark'] = test['Dates'].apply(lambda x: 1 if (len(x) > 4 and x[11:13] >= 18 and x[11:13] < 6) else 0)
 
-features_non_numeric = ['Dates','DayOfWeek','PdDistrict','Address']
 # Pre-processing non-number values
 le = LabelEncoder()
 for col in features_non_numeric:
@@ -58,10 +59,10 @@ for col in features:
 # Define classifiers
 if sample:
     classifiers = [
-        # RandomForestClassifier(n_estimators=100,verbose=True),
-        # GradientBoostingClassifier(n_estimators=10, learning_rate=1.0,max_depth=5, random_state=0),
-        # KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=10, metric='minkowski'),
-        # AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20), algorithm="SAMME.R", n_estimators=10),
+        RandomForestClassifier(n_estimators=100,verbose=True),
+        GradientBoostingClassifier(n_estimators=10, learning_rate=1.0,max_depth=5, random_state=0),
+        KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=10, metric='minkowski'),
+        AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20), algorithm="SAMME.R", n_estimators=10),
         Classifier(
             layers=[
                 Layer("Tanh", units=200),
@@ -71,7 +72,7 @@ if sample:
             learning_rate=0.01,
             learning_rule='momentum',
             learning_momentum=0.9,
-            batch_size=10000,
+            batch_size=100,
             valid_size=0.01,
             n_stable=100,
             n_iter=100,
@@ -88,7 +89,7 @@ else:
             learning_rate=0.01,
             learning_rule='momentum',
             learning_momentum=0.9,
-            batch_size=10000,
+            batch_size=100,
             valid_size=0.01,
             n_stable=100,
             n_iter=100,
