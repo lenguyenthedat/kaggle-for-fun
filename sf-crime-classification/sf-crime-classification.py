@@ -10,15 +10,11 @@ from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, Ran
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sknn.mlp import Classifier, Layer
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import MinMaxScaler
 
 pd.options.mode.chained_assignment = None
 
 sample = True
 random = False # disable for testing performance purpose i.e fix train and test dataset.
-
-features = ['Dates','DayOfWeek','PdDistrict','Address','X','Y']
-features_non_numeric = ['DayOfWeek','PdDistrict','Address']
 
 # Load data
 if sample: # To run with 100k data
@@ -34,26 +30,17 @@ else:
     train = pd.read_csv('./data/train.csv')
     test = pd.read_csv('./data/test.csv')
 
-# Add new features:
-features = ['year','month','day','hour','DayOfWeek','PdDistrict','StreetNo','Address','X','Y']
-train['year'] = train['Dates'].apply(lambda x: x[:4] if len(x) > 4 else 2010)
-train['month'] = train['Dates'].apply(lambda x: x[5:7] if len(x) > 4 else 6)
-train['day'] = train['Dates'].apply(lambda x: x[8:10] if len(x) > 4 else 15)
-train['hour'] = train['Dates'].apply(lambda x: x[11:13] if len(x) > 4 else 12)
-train['dark'] = train['Dates'].apply(lambda x: 1 if (len(x) > 4 and x[11:13] >= 18 and x[11:13] < 6) else 0)
-train['weekend'] = train['DayOfWeek'].apply(lambda x: 1 if x in ['Sunday','Saturday'] else 0)
+features = ['Dates','hour','dark','DayOfWeek','PdDistrict','StreetNo','Address','X','Y']
 train['StreetNo'] = train['Address'].apply(lambda x: x.split(' ', 1)[0] if x.split(' ', 1)[0].isdigit() else 0)
 train['Address'] = train['Address'].apply(lambda x: x.split(' ', 1)[1] if x.split(' ', 1)[0].isdigit() else x)
-test['year'] = test['Dates'].apply(lambda x: x[:4] if len(x) > 4 else 2010)
-test['month'] = test['Dates'].apply(lambda x: x[5:7] if len(x) > 4 else 6)
-test['day'] = test['Dates'].apply(lambda x: x[8:10] if len(x) > 4 else 15)
-test['hour'] = test['Dates'].apply(lambda x: x[11:13] if len(x) > 4 else 12)
-test['dark'] = test['Dates'].apply(lambda x: 1 if (len(x) > 4 and x[11:13] >= 18 and x[11:13] < 6) else 0)
-test['weekend'] = test['DayOfWeek'].apply(lambda x: 1 if x in ['Sunday','Saturday'] else 0)
 test['StreetNo'] = test['Address'].apply(lambda x: x.split(' ', 1)[0] if x.split(' ', 1)[0].isdigit() else 0)
 test['Address'] = test['Address'].apply(lambda x: x.split(' ', 1)[1] if x.split(' ', 1)[0].isdigit() else x)
-# print train[:10] # debug
+train['hour'] = train['Dates'].apply(lambda x: x[11:13] if len(x) > 4 else 12)
+train['dark'] = train['Dates'].apply(lambda x: 1 if (len(x) > 4 and x[11:13] >= 18 and x[11:13] < 6) else 0)
+test['hour'] = test['Dates'].apply(lambda x: x[11:13] if len(x) > 4 else 12)
+test['dark'] = test['Dates'].apply(lambda x: 1 if (len(x) > 4 and x[11:13] >= 18 and x[11:13] < 6) else 0)
 
+features_non_numeric = ['Dates','DayOfWeek','PdDistrict','Address']
 # Pre-processing non-number values
 le = LabelEncoder()
 for col in features_non_numeric:
@@ -61,48 +48,51 @@ for col in features_non_numeric:
     train[col] = le.transform(train[col])
     test[col] = le.transform(test[col])
 
+# Neural Network, Stochastic Gradient Descent is sensitive to feature scaling, so it is highly recommended to scale your data.
+scaler = StandardScaler()
+for col in features:
+    scaler.fit(list(train[col])+list(test[col]))
+    train[col] = scaler.transform(train[col])
+    test[col] = scaler.transform(test[col])
+
 # Define classifiers
 if sample:
     classifiers = [
-        RandomForestClassifier(n_estimators=100,verbose=True),
-        GradientBoostingClassifier(n_estimators=10, learning_rate=1.0,max_depth=5, random_state=0),
-        KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=10, metric='minkowski'),
-        AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20), algorithm="SAMME.R", n_estimators=10),
-        Pipeline([
-            ('min/max scaler', MinMaxScaler(feature_range=(0.0, 1.0))),
-            ('neural network', Classifier(
-                layers=[
-                    # Convolution("Rectifier", channels=10, pool_shape=(2,2), kernel_shape=(3, 3)),
-                    Layer('Rectifier', units=200),
-                    Layer('Softmax')],
-                learning_rate=0.01,
-                learning_rule='momentum',
-                learning_momentum=0.9,
-                batch_size=1000,
-                valid_size=0.01,
-                # valid_set=(X_test, y_test),
-                n_stable=100,
-                n_iter=100,
-                verbose=True))])
+        # RandomForestClassifier(n_estimators=100,verbose=True),
+        # GradientBoostingClassifier(n_estimators=10, learning_rate=1.0,max_depth=5, random_state=0),
+        # KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=10, metric='minkowski'),
+        # AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20), algorithm="SAMME.R", n_estimators=10),
+        Classifier(
+            layers=[
+                Layer("Tanh", units=200),
+                Layer("Sigmoid", units=200),
+                Layer('Rectifier', units=200),
+                Layer('Softmax')],
+            learning_rate=0.01,
+            learning_rule='momentum',
+            learning_momentum=0.9,
+            batch_size=10000,
+            valid_size=0.01,
+            n_stable=100,
+            n_iter=100,
+            verbose=True)
     ]
 else:
     classifiers = [# Other methods are underperformed yet take very long training time for this data set
-        Pipeline([
-            ('min/max scaler', MinMaxScaler(feature_range=(0.0, 1.0))),
-            ('neural network', Classifier(
-                layers=[
-                    # Convolution("Rectifier", channels=10, pool_shape=(2,2), kernel_shape=(3, 3)),
-                    Layer('Rectifier', units=200),
-                    Layer('Softmax')],
-                learning_rate=0.01,
-                learning_rule='momentum',
-                learning_momentum=0.9,
-                batch_size=1000,
-                valid_size=0.01,
-                # valid_set=(X_test, y_test),
-                n_stable=100,
-                n_iter=100,
-                verbose=True))])
+        Classifier(
+            layers=[
+                Layer("Tanh", units=200),
+                Layer("Sigmoid", units=200),
+                Layer('Rectifier', units=200),
+                Layer('Softmax')],
+            learning_rate=0.01,
+            learning_rule='momentum',
+            learning_momentum=0.9,
+            batch_size=10000,
+            valid_size=0.01,
+            n_stable=100,
+            n_iter=100,
+            verbose=True)
     ]
 
 # Train
