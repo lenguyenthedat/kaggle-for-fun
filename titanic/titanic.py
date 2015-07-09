@@ -12,7 +12,7 @@ warnings.filterwarnings('ignore')
 
 pd.options.mode.chained_assignment = None
 
-sample = False
+sample = True
 
 features = ['Pclass','Name','Sex','Age','SibSp','Parch','Ticket','Fare','Cabin','Embarked']
 features_non_numeric = ['Pclass','Name','Sex','Age','SibSp','Parch','Ticket','Fare','Cabin','Embarked']
@@ -22,15 +22,15 @@ myid = 'PassengerId'
 # Load data
 if sample: # To run with 100k data
     df = pd.read_csv('./data/train.csv')
-    df['is_train'] = (df[myid] % 10) >= 3
+    df['is_train'] = (df[myid] % 10) >= 5
     train, test = df[df['is_train']==True], df[df['is_train']==False]
 else:
     # To run with real data
     train = pd.read_csv('./data/train.csv')
     test = pd.read_csv('./data/test.csv')
 
-features = ['Pclass','Sex','Age','SibSp','Parch','Fare','Cabin','Embarked','titles']
-features = ['Pclass','Sex','Age','SibSp','Parch','Fare','Cabin','Embarked','titles']
+features = ['Pclass','Sex','Age','SibSp','Parch','Fare','Cabin','Embarked']
+features = ['Pclass','Sex','Age','SibSp','Parch','Fare','Cabin','Embarked']
 features_non_numeric = ['Pclass','Name','Sex','Age','SibSp','Parch','Ticket','Cabin','Fare','Embarked','firstname','titles']
 train['firstname'] = train['Name'].apply(lambda x: x.split(',')[0]) 
 test['firstname'] = test['Name'].apply(lambda x: x.split(',')[0]) 
@@ -63,11 +63,11 @@ classifiers = [
             Layer("Sigmoid", units=200),
             Layer('Rectifier', units=200),
             Layer('Softmax')],
-        learning_rate=0.1,
+        learning_rate=0.05,
         learning_rule='sgd',
-        learning_momentum=0.1,
+        learning_momentum=0.5,
         batch_size=100,
-        valid_size=0.01,
+        valid_size=0.05,
         n_stable=100,
         n_iter=100,
         verbose=True)
