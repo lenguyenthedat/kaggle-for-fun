@@ -17,6 +17,8 @@ random = False # disable for testing performance purpose i.e fix train and test 
 
 features = ['DayOfWeek','PdDistrict','Address','X','Y']
 features_non_numeric = ['Dates','DayOfWeek','PdDistrict','Address']
+goal = 'Category'
+myid = 'Id'
 
 # Load data
 if sample: # To run with 100k data
@@ -56,6 +58,21 @@ for col in features:
     train[col] = scaler.transform(train[col])
     test[col] = scaler.transform(test[col])
 
+MyNNClassifier = Classifier(
+                    layers=[
+                        Layer("Tanh", units=500),
+                        Layer("Sigmoid", units=500),
+                        Layer('Rectifier', units=500),
+                        Layer('Softmax')],
+                    learning_rate=0.01,
+                    learning_rule='momentum',
+                    learning_momentum=0.9,
+                    batch_size=100,
+                    valid_size=0.01,
+                    n_stable=100,
+                    n_iter=100,
+                    verbose=True)
+
 # Define classifiers
 if sample:
     classifiers = [
@@ -63,44 +80,18 @@ if sample:
         GradientBoostingClassifier(n_estimators=10, learning_rate=1.0,max_depth=5, random_state=0),
         KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=10, metric='minkowski'),
         AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20), algorithm="SAMME.R", n_estimators=10),
-        Classifier(
-            layers=[
-                Layer("Tanh", units=200),
-                Layer("Sigmoid", units=200),
-                Layer('Rectifier', units=200),
-                Layer('Softmax')],
-            learning_rate=0.01,
-            learning_rule='momentum',
-            learning_momentum=0.9,
-            batch_size=100,
-            valid_size=0.01,
-            n_stable=100,
-            n_iter=100,
-            verbose=True)
+        MyNNClassifier
     ]
 else:
     classifiers = [# Other methods are underperformed yet take very long training time for this data set
-        Classifier(
-            layers=[
-                Layer("Tanh", units=200),
-                Layer("Sigmoid", units=200),
-                Layer('Rectifier', units=200),
-                Layer('Softmax')],
-            learning_rate=0.01,
-            learning_rule='momentum',
-            learning_momentum=0.9,
-            batch_size=100,
-            valid_size=0.01,
-            n_stable=100,
-            n_iter=100,
-            verbose=True)
+        MyNNClassifier
     ]
 
 # Train
 for classifier in classifiers:
     print classifier.__class__.__name__
     start = time.time()
-    classifier.fit(np.array(train[list(features)]), train.Category)
+    classifier.fit(np.array(train[list(features)]), train[goal])
         # use np.array to avoid this stupid error `IndexError: indices are out-of-bounds`
         # ref: http://stackoverflow.com/questions/27332557/dbscan-indices-are-out-of-bounds-python
     # print classifier.classes_ # make sure it's following `features` order
@@ -111,21 +102,23 @@ if sample:
     for classifier in classifiers:
         print classifier.__class__.__name__
         print 'Log Loss:'
-        print log_loss(test.Category.values.astype(pd.np.string_),
+        print log_loss(test[goal].values.astype(pd.np.string_),
                        classifier.predict_proba(np.array(test[features])))
 
 else: # Export result
+    count = 0
     for classifier in classifiers:
+        count += 1
         if not os.path.exists('result/'):
             os.makedirs('result/')
         # TODO: fix this shit
-        # test['Id'] values will get converted to float since column_stack will result in array
-        predictions = np.column_stack((test['Id'], classifier.predict_proba(np.array(test[features])))).tolist()
+        # test[myid] values will get converted to float since column_stack will result in array
+        predictions = np.column_stack((test[myid], classifier.predict_proba(np.array(test[features])))).tolist()
         predictions = [[int(i[0])] + i[1:] for i in predictions]
-        csvfile = 'result/' + classifier.__class__.__name__ + '-submit.csv'
+        csvfile = 'result/' + classifier.__class__.__name__ + '-'+ str(count) + '-submit.csv'
         with open(csvfile, 'w') as output:
             writer = csv.writer(output, lineterminator='\n')
-            writer.writerow(['Id','ARSON','ASSAULT','BAD CHECKS','BRIBERY','BURGLARY','DISORDERLY CONDUCT',
+            writer.writerow([myid,'ARSON','ASSAULT','BAD CHECKS','BRIBERY','BURGLARY','DISORDERLY CONDUCT',
                              'DRIVING UNDER THE INFLUENCE','DRUG/NARCOTIC','DRUNKENNESS','EMBEZZLEMENT',
                              'EXTORTION','FAMILY OFFENSES','FORGERY/COUNTERFEITING','FRAUD','GAMBLING',
                              'KIDNAPPING','LARCENY/THEFT','LIQUOR LAWS','LOITERING','MISSING PERSON',
