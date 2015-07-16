@@ -133,9 +133,9 @@ MyNNClassifier1 = Classifier(
 
 MyNNClassifier2 = Classifier(
                     layers=[
-                        Convolution("Rectifier", channels=8, kernel_shape=(2,2)),
-                        Layer("Tanh", units=500),
-                        Layer("Sigmoid", units=500),
+                        Convolution("Rectifier", channels=8, kernel_shape=(5,5)),
+                        Convolution("Rectifier", channels=8, kernel_shape=(5,5)),
+                        Convolution("Rectifier", channels=8, kernel_shape=(5,5)),
                         Layer('Softmax')],
                     learning_rate=0.01,
                     learning_rule='momentum',
