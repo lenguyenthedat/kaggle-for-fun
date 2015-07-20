@@ -13,13 +13,14 @@ from sknn.mlp import Classifier, Layer
 pd.options.mode.chained_assignment = None
 
 sample = False
-random = False # disable for testing performance purpose i.e fix train and test dataset.
 
 features = ['T1_V1','T1_V2','T1_V3','T1_V4','T1_V5','T1_V6','T1_V7','T1_V8','T1_V9',
             'T1_V10','T1_V11','T1_V12','T1_V13','T1_V14','T1_V15','T1_V16','T1_V17',
             'T2_V1','T2_V2','T2_V3','T2_V4','T2_V5','T2_V6','T2_V7','T2_V8','T2_V9',
             'T2_V10','T2_V11','T2_V12','T2_V13','T2_V14','T2_V15']
-features_non_numeric = features
+features_non_numeric = ['T1_V4','T1_V5','T1_V6','T1_V7','T1_V8','T1_V9',
+            'T1_V11','T1_V12','T1_V15','T1_V16','T1_V17',
+            'T2_V3','T2_V5','T2_V11','T2_V12','T2_V13']
 goal = 'Hazard'
 myid = 'Id'
 
@@ -120,8 +121,8 @@ if sample:
     ]
 else:
     classifiers = [# Other methods are underperformed yet take very long training time for this data set
+        RandomForestClassifier(n_estimators=100,verbose=True),
         KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=10, metric='minkowski'),
-        RandomForestClassifier(n_estimators=2000,verbose=True),
         MyNNClassifier1,
         MyNNClassifier2,
         MyNNClassifier3,
