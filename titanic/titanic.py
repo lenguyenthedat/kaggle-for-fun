@@ -31,7 +31,6 @@ else:
     test = pd.read_csv('./data/test.csv')
 
 features = ['Pclass','Sex','Age','SibSp','Parch','Fare','Cabin','Embarked']
-features = ['Pclass','Sex','Age','SibSp','Parch','Fare','Cabin','Embarked']
 features_non_numeric = ['Pclass','Name','Sex','Age','SibSp','Parch','Ticket','Cabin','Fare','Embarked','firstname','titles']
 train['firstname'] = train['Name'].apply(lambda x: x.split(',')[0]) 
 test['firstname'] = test['Name'].apply(lambda x: x.split(',')[0]) 
