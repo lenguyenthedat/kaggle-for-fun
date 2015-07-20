@@ -4,6 +4,7 @@ import csv
 import numpy as np
 import os
 import math
+import xgboost as xgb
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sknn.mlp import Classifier, Layer
@@ -55,8 +56,8 @@ for col in features_non_numeric:
     train[col] = scaler.transform(train[col])
     test[col] = scaler.transform(test[col])
 
-
 classifiers = [
+    xgb.XGBClassifier(gamma=10,max_depth=100,n_estimators=50000),
     Classifier(
         layers=[
             Layer("Tanh", units=200),
