@@ -3,4 +3,4 @@ Liberty Mutual Group: Property Inspection Prediction
 
 https://www.kaggle.com/c/liberty-mutual-group-property-inspection-prediction
 
-TBA
+- 1st version: basic RandomForest. 70s training time,  normalized Gini = 0.336953
