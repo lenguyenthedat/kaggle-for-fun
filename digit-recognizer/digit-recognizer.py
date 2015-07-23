@@ -9,6 +9,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
+from xgboost import XGBClassifier
 from sklearn.preprocessing import StandardScaler
 from sknn.mlp import Classifier, Layer, Convolution
 
@@ -95,7 +96,7 @@ features = ['pixel0','pixel1','pixel2','pixel3','pixel4','pixel5','pixel6','pixe
             'pixel760','pixel761','pixel762','pixel763','pixel764','pixel765','pixel766','pixel767','pixel768','pixel769',
             'pixel770','pixel771','pixel772','pixel773','pixel774','pixel775','pixel776','pixel777','pixel778','pixel779',
             'pixel780','pixel781','pixel782','pixel783']
-mygoal = 'Label' # rmb to change your training data column from `label` to `Label`
+goal = 'Label' # rmb to change your training data column from `label` to `Label`
 myid = 'ImageId'
 
 # Load data
@@ -118,31 +119,31 @@ for col in features:
 
 MyNNClassifier1 = Classifier(
                     layers=[
-                        Layer('Rectifier', units=500),
-                        Layer("Tanh", units=500),
-                        Layer("Sigmoid", units=500),
+                        Layer('Rectifier', units=100),
+                        Layer("Tanh", units=100),
+                        Layer("Sigmoid", units=100),
                         Layer('Softmax')],
                     learning_rate=0.01,
                     learning_rule='momentum',
                     learning_momentum=0.9,
                     batch_size=100,
                     valid_size=0.01,
-                    n_stable=200,
+                    n_stable=10,
                     n_iter=200,
                     verbose=True)
 
 MyNNClassifier2 = Classifier(
                     layers=[
-                        Convolution("Rectifier", channels=8, kernel_shape=(5,5)),
-                        Convolution("Rectifier", channels=8, kernel_shape=(5,5)),
-                        Convolution("Rectifier", channels=8, kernel_shape=(5,5)),
+                        Convolution("Rectifier", channels=16, kernel_shape=(5,5)),
+                        Convolution("Rectifier", channels=16, kernel_shape=(5,5)),
+                        Convolution("Rectifier", channels=16, kernel_shape=(5,5)),
                         Layer('Softmax')],
                     learning_rate=0.01,
                     learning_rule='momentum',
                     learning_momentum=0.9,
                     batch_size=100,
                     valid_size=0.01,
-                    n_stable=200,
+                    n_stable=10,
                     n_iter=200,
                     verbose=True)
 
@@ -151,26 +152,22 @@ if sample:
     classifiers = [
         MyNNClassifier1,
         MyNNClassifier2,
-        # GradientBoostingClassifier(n_estimators=10, learning_rate=1.0,max_depth=5, random_state=0),
-        # KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=10, metric='minkowski'),
-        # AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20), algorithm="SAMME.R", n_estimators=10),
-        RandomForestClassifier(n_estimators=2000,n_jobs=1,verbose=True)
+        RandomForestClassifier(n_estimators=256, max_depth=64),
+        XGBClassifier(n_estimators=128, max_depth=2)
     ]
 else:
     classifiers = [# Other methods are underperformed yet take very long training time for this data set
         MyNNClassifier1,
         MyNNClassifier2,
-        RandomForestClassifier(n_estimators=2000,n_jobs=1,verbose=True)
+        RandomForestClassifier(n_estimators=256, max_depth=64),
+        XGBClassifier(n_estimators=128, max_depth=2)
     ]
 
 # Train
 for classifier in classifiers:
     print classifier.__class__.__name__
     start = time.time()
-    classifier.fit(np.array(train[list(features)]), train[mygoal])
-        # use np.array to avoid this stupid error `IndexError: indices are out-of-bounds`
-        # ref: http://stackoverflow.com/questions/27332557/dbscan-indices-are-out-of-bounds-python
-    # print classifier.classes_ # make sure it's following `features` order
+    classifier.fit(np.array(train[list(features)]), train[goal])
     print '  -> Training time:', time.time() - start
 # Evaluation and export result
 if sample:
@@ -178,8 +175,8 @@ if sample:
     for classifier in classifiers:
         print classifier.__class__.__name__
         print 'Accuracy Score:'
-        print accuracy_score(test[mygoal].values,
-                       classifier.predict(np.array(test[features])))
+        print accuracy_score(test[goal].values,
+            classifier.predict(np.array(test[features])))
 
 else: # Export result
     count = 0
@@ -196,6 +193,6 @@ else: # Export result
         csvfile = 'result/' + classifier.__class__.__name__ + '-'+ str(count) + '-submit.csv'
         with open(csvfile, 'w') as output:
             writer = csv.writer(output, lineterminator='\n')
-            writer.writerow([myid,mygoal])
+            writer.writerow([myid,goal])
             for i in range(0, len(predictions)):
                 writer.writerow([i+1,predictions[i]])
