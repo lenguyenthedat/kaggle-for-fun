@@ -3,10 +3,12 @@ import time
 import csv
 import numpy as np
 import os
+
 from sklearn.metrics import log_loss
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
+from xgboost import XGBClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sknn.mlp import Classifier, Layer
 
@@ -60,30 +62,34 @@ for col in features:
 
 MyNNClassifier = Classifier(
                     layers=[
-                        Layer("Tanh", units=500),
-                        Layer("Sigmoid", units=500),
-                        Layer('Rectifier', units=500),
+                        Layer("Tanh", units=100),
+                        Layer("Tanh", units=100),
+                        Layer("Tanh", units=100),
+                        Layer("Sigmoid", units=100),
                         Layer('Softmax')],
                     learning_rate=0.01,
                     learning_rule='momentum',
                     learning_momentum=0.9,
                     batch_size=100,
                     valid_size=0.01,
-                    n_stable=100,
-                    n_iter=100,
+                    n_stable=20,
+                    n_iter=200,
                     verbose=True)
 
 # Define classifiers
 if sample:
     classifiers = [
-        RandomForestClassifier(n_estimators=100,verbose=True),
+        RandomForestClassifier(max_depth=16,n_estimators=512),
         GradientBoostingClassifier(n_estimators=10, learning_rate=1.0,max_depth=5, random_state=0),
         KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=10, metric='minkowski'),
-        AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20), algorithm="SAMME.R", n_estimators=10),
+        AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=8), algorithm="SAMME.R", n_estimators=128),
+        XGBClassifier(max_depth=8,n_estimators=128),
         MyNNClassifier
     ]
 else:
     classifiers = [# Other methods are underperformed yet take very long training time for this data set
+        RandomForestClassifier(max_depth=16,n_estimators=512),
+        XGBClassifier(max_depth=8,n_estimators=128),
         MyNNClassifier
     ]
 
@@ -92,9 +98,6 @@ for classifier in classifiers:
     print classifier.__class__.__name__
     start = time.time()
     classifier.fit(np.array(train[list(features)]), train[goal])
-        # use np.array to avoid this stupid error `IndexError: indices are out-of-bounds`
-        # ref: http://stackoverflow.com/questions/27332557/dbscan-indices-are-out-of-bounds-python
-    # print classifier.classes_ # make sure it's following `features` order
     print '  -> Training time:', time.time() - start
 # Evaluation and export result
 if sample:
