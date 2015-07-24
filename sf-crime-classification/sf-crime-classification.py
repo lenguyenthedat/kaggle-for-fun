@@ -93,24 +93,23 @@ else:
         MyNNClassifier
     ]
 
-# Train
+count = 0
 for classifier in classifiers:
+    # Train
     print classifier.__class__.__name__
     start = time.time()
     classifier.fit(np.array(train[list(features)]), train[goal])
     print '  -> Training time:', time.time() - start
-# Evaluation and export result
-if sample:
-    # Test results
-    for classifier in classifiers:
+
+    # Evaluation
+    if sample:
+        # Test results
         print classifier.__class__.__name__
         print 'Log Loss:'
         print log_loss(test[goal].values.astype(pd.np.string_),
                        classifier.predict_proba(np.array(test[features])))
 
-else: # Export result
-    count = 0
-    for classifier in classifiers:
+    else: # Export result
         count += 1
         if not os.path.exists('result/'):
             os.makedirs('result/')

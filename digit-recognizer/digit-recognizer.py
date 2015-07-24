@@ -128,7 +128,7 @@ MyNNClassifier1 = Classifier(
                     learning_momentum=0.9,
                     batch_size=100,
                     valid_size=0.01,
-                    n_stable=10,
+                    n_stable=20,
                     n_iter=200,
                     verbose=True)
 
@@ -137,13 +137,14 @@ MyNNClassifier2 = Classifier(
                         Convolution("Rectifier", channels=16, kernel_shape=(5,5)),
                         Convolution("Rectifier", channels=16, kernel_shape=(5,5)),
                         Convolution("Rectifier", channels=16, kernel_shape=(5,5)),
+                        Layer('Rectifier', units=100),
                         Layer('Softmax')],
                     learning_rate=0.01,
                     learning_rule='momentum',
                     learning_momentum=0.9,
                     batch_size=100,
                     valid_size=0.01,
-                    n_stable=10,
+                    n_stable=20,
                     n_iter=200,
                     verbose=True)
 
