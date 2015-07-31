@@ -14,7 +14,7 @@ from sknn.mlp import Classifier, Layer
 
 pd.options.mode.chained_assignment = None
 
-sample = True
+sample = False
 random = False # disable for testing performance purpose i.e fix train and test dataset.
 
 features = ['DayOfWeek','PdDistrict','Address','X','Y']
@@ -88,7 +88,7 @@ if sample:
     ]
 else:
     classifiers = [# Other methods are underperformed yet take very long training time for this data set
-        RandomForestClassifier(max_depth=16,n_estimators=512),
+        RandomForestClassifier(max_depth=16,n_estimators=1024),
         XGBClassifier(max_depth=8,n_estimators=128),
         MyNNClassifier
     ]
