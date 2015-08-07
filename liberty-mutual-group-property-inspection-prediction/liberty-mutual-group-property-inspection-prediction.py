@@ -10,6 +10,7 @@ from sklearn.preprocessing import LabelEncoder
 from sknn.mlp import Regressor, Layer
 from sklearn.grid_search import GridSearchCV
 from xgboost import XGBRegressor
+from sklearn.svm import SVR
 
 pd.options.mode.chained_assignment = None
 
@@ -41,9 +42,9 @@ gini_scorer = make_scorer(Gini, greater_is_better = True)
 
 sample = True
 gridsearch = False
-features = ['T1_V1','T1_V2','T1_V3','T1_V4','T1_V5','T1_V6','T1_V7','T1_V8','T1_V9',
-            'T1_V11','T1_V12','T1_V14','T1_V15','T1_V16','T1_V17',
-            'T2_V1','T2_V2','T2_V3','T2_V4','T2_V5','T2_V6','T2_V8','T2_V9',
+features = ['T1_V1','T1_V2','T1_V3','T1_V4','T1_V5','T1_V6','T1_V7','T1_V8','T1_V9','T1_V10',
+            'T1_V11','T1_V12','T1_V13','T1_V14','T1_V15','T1_V16','T1_V17',
+            'T2_V1','T2_V2','T2_V3','T2_V4','T2_V5','T2_V6','T2_V7','T2_V8','T2_V9','T2_V10',
             'T2_V11','T2_V12','T2_V13','T2_V14','T2_V15']
 features_non_numeric = ['T1_V4','T1_V5','T1_V6','T1_V7','T1_V8','T1_V9',
             'T1_V11','T1_V12','T1_V15','T1_V16','T1_V17',
@@ -75,15 +76,17 @@ for col in features_non_numeric:
 # Define regressors
 if sample:
     regressors = [
-        Regressor(layers=[
-                    Layer("Sigmoid", units=100),
-                    Layer("Sigmoid", units=100),
-                    Layer("Linear")],
-                  learning_rate=0.01,learning_rule='adadelta',learning_momentum=0.9,
-                  batch_size=100,valid_size=0.01,
-                  n_stable=50,n_iter=200,verbose=False),
-        GradientBoostingRegressor(n_estimators=10, learning_rate=1.0,max_depth=5, random_state=0),
-        RandomForestRegressor(),
+        # Regressor(layers=[
+        #             Layer("Sigmoid", units=100),
+        #             Layer("Sigmoid", units=100),
+        #             Layer("Linear")],
+        #           learning_rate=0.01,learning_rule='adadelta',learning_momentum=0.9,
+        #           batch_size=100,valid_size=0.01,
+        #           n_stable=50,n_iter=200,verbose=False),
+        # GradientBoostingRegressor(n_estimators=10, learning_rate=1.0,max_depth=5, random_state=0),
+        # RandomForestRegressor(),
+        # SVR(C=10.0, kernel='rbf', degree =3, gamma=0.0,  max_iter=100, shrinking=True, tol=0.001, verbose=False
+        #        coef0=0.0, epsilon=0.1)
         XGBRegressor(max_depth=5,n_estimators=200,subsample=0.8,min_child_weight=1),
         XGBRegressor(max_depth=5,n_estimators=128,subsample=0.8,min_child_weight=1)
     ]
