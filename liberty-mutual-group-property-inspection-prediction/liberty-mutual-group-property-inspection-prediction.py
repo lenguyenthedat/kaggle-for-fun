@@ -40,12 +40,11 @@ def Gini(y_true, y_pred):
 gini_scorer = make_scorer(Gini, greater_is_better = True)
 
 sample = True
-gridsearch = True
-
+gridsearch = False
 features = ['T1_V1','T1_V2','T1_V3','T1_V4','T1_V5','T1_V6','T1_V7','T1_V8','T1_V9',
-            'T1_V10','T1_V11','T1_V12','T1_V13','T1_V14','T1_V15','T1_V16','T1_V17',
-            'T2_V1','T2_V2','T2_V3','T2_V4','T2_V5','T2_V6','T2_V7','T2_V8','T2_V9',
-            'T2_V10','T2_V11','T2_V12','T2_V13','T2_V14','T2_V15']
+            'T1_V11','T1_V12','T1_V14','T1_V15','T1_V16','T1_V17',
+            'T2_V1','T2_V2','T2_V3','T2_V4','T2_V5','T2_V6','T2_V8','T2_V9',
+            'T2_V11','T2_V12','T2_V13','T2_V14','T2_V15']
 features_non_numeric = ['T1_V4','T1_V5','T1_V6','T1_V7','T1_V8','T1_V9',
             'T1_V11','T1_V12','T1_V15','T1_V16','T1_V17',
             'T2_V3','T2_V5','T2_V11','T2_V12','T2_V13']
@@ -54,9 +53,13 @@ myid = 'Id'
 
 # Load data
 if sample: # To train with 75% data
-    df = pd.read_csv('./data/train.csv',dtype={'Category':pd.np.string_})
-    df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
-    train, test = df[df['is_train']==True], df[df['is_train']==False]
+    if gridsearch:
+        train = pd.read_csv('./data/train.csv')
+        test = pd.read_csv('./data/test.csv')
+    else:
+        df = pd.read_csv('./data/train.csv',dtype={'Category':pd.np.string_})
+        df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
+        train, test = df[df['is_train']==True], df[df['is_train']==False]
 else:
     # To run with real data
     train = pd.read_csv('./data/train.csv')
@@ -81,12 +84,14 @@ if sample:
                   n_stable=50,n_iter=200,verbose=False),
         GradientBoostingRegressor(n_estimators=10, learning_rate=1.0,max_depth=5, random_state=0),
         RandomForestRegressor(),
-        XGBRegressor()
+        XGBRegressor(max_depth=5,n_estimators=200,subsample=0.8,min_child_weight=1),
+        XGBRegressor(max_depth=5,n_estimators=128,subsample=0.8,min_child_weight=1)
     ]
 else:
     regressors = [# Other methods are underperformed yet take very long training time for this data set
         RandomForestRegressor(max_depth=8,n_estimators=128),
-        XGBRegressor(max_depth=2,n_estimators=512)
+        XGBRegressor(max_depth=5,n_estimators=200,subsample=0.8,min_child_weight=1),
+        XGBRegressor(max_depth=5,n_estimators=128,subsample=0.8,min_child_weight=1)
     ]
 
 # Train
@@ -106,10 +111,10 @@ for regressor in regressors:
             if (regressor.__class__.__name__ == "XGBRegressor"):
                 print "Attempting GridSearchCV for XGB model"
                 gscv = GridSearchCV(regressor, {
-                    'max_depth': [2, 8, 16],
-                    'n_estimators': [32, 64, 128, 256, 512],
-                    'min_child_weight': [3,5],
-                    'subsample': [0.6,0.8,1]},
+                    'max_depth': [2, 5, 8, 16, 32],
+                    'n_estimators': [32, 64, 128, 512, 1024],
+                    'min_child_weight': [1,3,5],
+                    'subsample': [0.6,0.8,1,1.2]},
                     verbose=1, n_jobs=2, scoring=gini_scorer)
             if (regressor.__class__.__name__ == "RandomForestRegressor"):
                 print "Attempting GridSearchCV for RF model"
@@ -136,16 +141,15 @@ for regressor in regressors:
 
 # Evaluation and export result
 if sample:
-    # Test results
-    for regressor in regressors:
-        print regressor.__class__.__name__
-        try:
-            print 'Root mean_squared_error:'
-            print mean_squared_error(test[goal],regressor.predict(np.array(test[features])))**0.5
-            print 'Gini:'
-            print Gini(test[goal],regressor.predict(np.array(test[features])))
-        except:
-            pass
+    if ~gridsearch:
+        # Test results
+        for regressor in regressors:
+            print regressor.__class__.__name__
+            try:
+                print 'Gini:'
+                print Gini(test[goal],regressor.predict(np.array(test[features])))
+            except:
+                pass
 
 else: # Export result
     count = 0
