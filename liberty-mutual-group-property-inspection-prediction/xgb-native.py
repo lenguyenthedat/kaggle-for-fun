@@ -17,8 +17,6 @@ from sklearn import cross_validation
 
 sample = True
 
-goal = 'RESIGNED'
-myid = 'PERID'
 features = ['T1_V1','T1_V2','T1_V3','T1_V4','T1_V5','T1_V6','T1_V7','T1_V8','T1_V9','T1_V10',
             'T1_V11','T1_V12','T1_V13','T1_V14','T1_V15','T1_V16','T1_V17',
             'T2_V1','T2_V2','T2_V3','T2_V4','T2_V5','T2_V6','T2_V7','T2_V8','T2_V9','T2_V10',
@@ -76,9 +74,9 @@ for col in set(features) - set(features_non_numeric):
     test[col] = scaler.transform(test[col])
 
 # XGB Params
-params = {'max_depth':9, 'eta':0.01, 'silent':1,'objective':'reg:linear',
+params = {'max_depth':7, 'eta':0.01, 'silent':1,'objective':'reg:linear',
           'min_child_weight':6, 'subsample':0.7,'colsample_bytree':0.7, 'nthread':4}
-num_rounds = 1000
+num_rounds = 795
 
 # TRAINING / GRIDSEARCH
 if sample:
