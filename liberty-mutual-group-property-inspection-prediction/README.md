@@ -3,6 +3,7 @@ Liberty Mutual Group: Property Inspection Prediction
 
 https://www.kaggle.com/c/liberty-mutual-group-property-inspection-prediction
 
-- 1st version: basic RandomForest. 70s training time,  normalized Gini = 0.336953
-- 2nd version: xgboost. 15s training time, normalized Gini = 0.366923
-- 3rd version: better xgboost parameter. 15s training time, normalized Gini = 0.372686
+- 1st version LB 0.336953: basic RandomForest.
+- 2nd version LB 0.366923: xgboost.
+- 3rd version LB 0.372686: better xgboost parameter.
+- 4rd version LB 0.378719: native xgboost. (Local score: 0.376601296742)
