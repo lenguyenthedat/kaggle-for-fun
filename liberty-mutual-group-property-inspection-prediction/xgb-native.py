@@ -74,9 +74,9 @@ for col in set(features) - set(features_non_numeric):
     test[col] = scaler.transform(test[col])
 
 # XGB Params
-params = {'max_depth':7, 'eta':0.01, 'silent':1,'objective':'reg:linear',
+params = {'max_depth':9, 'eta':0.01, 'silent':1,'objective':'reg:linear',
           'min_child_weight':6, 'subsample':0.7,'colsample_bytree':0.7, 'nthread':4}
-num_rounds = 795
+num_rounds = 555
 
 # TRAINING / GRIDSEARCH
 if sample:
