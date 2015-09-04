@@ -38,42 +38,26 @@ def load_data():
     features_numeric = test.select_dtypes(include=numerics).columns.tolist()
     features_non_numeric = [f for f in features if f not in features_numeric]
     # # Features set.
-    # filling what wasn't filled yet (wtf / need to fix)
-    train = train.fillna(-1)
-    train = train.fillna(-1)
     # noisy_features = [myid,'VAR_0207','VAR_1934','VAR_0493']
-    noisy_features = [myid]
+    noisy_features = [myid,goal]
     features = [c for c in features if c not in noisy_features]
     features_numeric = [c for c in features_numeric if c not in noisy_features]
     features_non_numeric = [c for c in features_non_numeric if c not in noisy_features]
     return (train,test,features,features_non_numeric)
 
 def process_data(train,test,features,features_non_numeric):
-    # Fill NA 
-    class DataFrameImputer(TransformerMixin):
-    # http://stackoverflow.com/questions/25239958/impute-categorical-missing-values-in-scikit-learn
-        def __init__(self):
-            """Impute missing values.
-            Columns of dtype object are imputed with the most frequent value 
-            in column.
-            Columns of other types are imputed with mean of column.
-            """
-        def fit(self, X, y=None):
-            self.fill = pd.Series([X[c].value_counts().index[0] # mode
-                if X[c].dtype == np.dtype('O') else X[c].mean() for c in X], # mean
-                index=X.columns)
-            return self
-        def transform(self, X, y=None):
-            return X.fillna(self.fill)
-    train = DataFrameImputer().fit_transform(train)
-    test = DataFrameImputer().fit_transform(test)
-    # filling what wasn't filled yet (wtf / need to fix)
+    train = train.fillna(train.mode().iloc[0])
+    test = test.fillna(test.mode().iloc[0])
+    # # filling what wasn't filled yet (wtf / need to fix)
+    for col in features_non_numeric:
+        train[col] = train[col].fillna('-1') # wtf
+        test[col] = test[col].fillna('-1') # wtf
     train = train.fillna(-1)
     test = test.fillna(-1)
     # Pre-processing non-numberic values
     le = LabelEncoder()
     for col in features_non_numeric:
-        # print col
+        print col
         le.fit(list(train[col])+list(test[col]))
         train[col] = le.transform(train[col])
         test[col] = le.transform(test[col])
