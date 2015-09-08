@@ -53,29 +53,16 @@ def load_data():
 
     # # Features set.
     noisy_features = [myid,goal]
-    # for f in features:
-    #     if len(train[f].value_counts()) < 1: # only 0 or 1 class: noisy
-    #         print f + ' only has ' + str(len(train[f].value_counts())) + ' class...'
-    #         noisy_features += [f]
-    #     if sum(train[f].value_counts()) < 0.5 * len(train[f]): # more than 50% is emty
-    #         print f + ' is ' + str(100 - 100*sum(train[f].value_counts()) / len(train[f])) + ' percent empty...'
-    #         noisy_features += [f]
-    #     if len(train[f].value_counts()) > 0.5 * len(train[f]): # too many classes
-    #         print f + ' has ' + str(len(train[f].value_counts())) + ' classes...'
-    #         noisy_features += [f]
-    # This list is the result of the above calculation, generated from the 5000 rows - training set.
-    # To be hardcoded here mainly because it took too long to re-create from the above for loop
-    noisy_features += [ 'VAR_0073','VAR_0074','VAR_0156','VAR_0157','VAR_0158','VAR_0159','VAR_0166','VAR_0167',
-                        'VAR_0168','VAR_0169','VAR_0176','VAR_0177','VAR_0178','VAR_0179','VAR_0205','VAR_0206',
-                        'VAR_0207','VAR_0207','VAR_0208','VAR_0209','VAR_0210','VAR_0211','VAR_0212','VAR_0213',
-                        'VAR_0213','VAR_0214','VAR_0214','VAR_0227','VAR_0228','VAR_0241','VAR_0293','VAR_0313',
-                        'VAR_0541','VAR_0543','VAR_0609','VAR_0648','VAR_0649','VAR_0652','VAR_0704','VAR_0840',
-                        'VAR_0840','VAR_0887','VAR_0893','VAR_0896','VAR_0898','VAR_0899','VAR_0908','VAR_0920',
-                        'VAR_0921','VAR_0931','VAR_0950','VAR_0951','VAR_0970','VAR_1081','VAR_1082','VAR_1087',
-                        'VAR_1088','VAR_1089','VAR_1130','VAR_1179','VAR_1180','VAR_1181','VAR_1199','VAR_1200',
-                        'VAR_1201','VAR_1202','VAR_1203','VAR_1220','VAR_1227','VAR_1228','VAR_1241','VAR_1243',
-                        'VAR_1312','VAR_1313','VAR_1353','VAR_1354','VAR_1371','VAR_1372','VAR_1489','VAR_1494',
-                        'VAR_1495','VAR_1496','VAR_1497','VAR_1801','VAR_1802']
+    for f in features:
+        if len(train[f].value_counts()) < 1: # uselesss
+            # print f + ' only has ' + str(len(train[f].value_counts())) + ' class...'
+            noisy_features += [f]
+        elif sum(train[f].value_counts()) < 0.5 * len(train[f]): # more than 50% is emty
+            # print f + ' is ' + str(100 - 100*sum(train[f].value_counts()) / len(train[f])) + ' percent empty...'
+            noisy_features += [f]
+        elif len(train[f].value_counts()) > 0.4 * len(train[f]): # too many classes
+            # print f + ' has ' + str(len(train[f].value_counts())) + ' classes...'
+            noisy_features += [f]
     features = [c for c in features if c not in noisy_features]
     features_numeric = [c for c in features_numeric if c not in noisy_features]
     features_non_numeric = [c for c in features_non_numeric if c not in noisy_features]
