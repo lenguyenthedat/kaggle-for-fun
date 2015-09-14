@@ -79,7 +79,7 @@ MyNNClassifier = Classifier(
 # Define classifiers
 if sample:
     classifiers = [
-        RandomForestClassifier(max_depth=16,n_estimators=512),
+        RandomForestClassifier(max_depth=16,n_estimators=1024),
         GradientBoostingClassifier(n_estimators=10, learning_rate=1.0,max_depth=5, random_state=0),
         KNeighborsClassifier(n_neighbors=100, weights='uniform', algorithm='auto', leaf_size=100, p=10, metric='minkowski'),
         AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=8), algorithm="SAMME.R", n_estimators=128),
@@ -88,9 +88,7 @@ if sample:
     ]
 else:
     classifiers = [# Other methods are underperformed yet take very long training time for this data set
-        RandomForestClassifier(max_depth=16,n_estimators=1024),
-        XGBClassifier(max_depth=8,n_estimators=128),
-        MyNNClassifier
+        RandomForestClassifier(max_depth=16,n_estimators=1024)
     ]
 
 count = 0

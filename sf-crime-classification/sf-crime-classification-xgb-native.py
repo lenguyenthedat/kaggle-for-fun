@@ -18,7 +18,7 @@ from sklearn import cross_validation
 from sklearn.metrics import log_loss
 from time import strptime
 
-sample = True
+sample = False
 
 goal = 'Category'
 myid = 'Id'
@@ -81,7 +81,7 @@ def process_data(train,test,features,features_non_numeric):
     # Neural Network, Stochastic Gradient Descent is sensitive to feature scaling, so it is highly recommended to scale your data.
     print "Standard Scaler: " + str(datetime.datetime.now())
     scaler = StandardScaler()
-    for col in set(features) - set(features_non_numeric):
+    for col in set(features): # - set(features_non_numeric):
         # print col
         scaler.fit(list(train[col])+list(test[col]))
         train[col] = scaler.transform(train[col])
@@ -92,8 +92,8 @@ def XGB_native(train,test,features):
     # XGB Params
     params = {'max_depth':8, 'eta':0.05, 'silent':1,
               'objective':'multi:softprob', 'num_class':39, 'eval_metric':'mlogloss',
-              'min_child_weight':3, 'subsample':0.65,'colsample_bytree':0.65, 'nthread':4}
-    num_rounds = 200
+              'min_child_weight':3, 'subsample':0.6,'colsample_bytree':0.6, 'nthread':4}
+    num_rounds = 250
     # Training / Cross Validation
     if sample:
         # import pdb;pdb.set_trace()
