@@ -10,13 +10,18 @@ from xgboost import XGBRegressor
 
 pd.options.mode.chained_assignment = None
 if not os.path.exists('result/'): os.makedirs('result/')
-sample = True
+sample = False
 gridsearch = False
 goal = 'Sales'
 myid = 'Id'
-features = ['Store','DayOfWeek','Date','Open','Promo','StateHoliday','SchoolHoliday',
+features = ['Store','DayOfWeek','Date','year','month','day','Open','Promo','StateHoliday','SchoolHoliday',
             'StoreType','Assortment','CompetitionDistance','CompetitionOpenSinceMonth',
             'CompetitionOpenSinceYear','Promo2','Promo2SinceWeek','Promo2SinceYear','PromoInterval']
+
+useless_features = ['Date','Promo2SinceWeek','PromoInterval','CompetitionOpenSinceYear','CompetitionOpenSinceMonth','Promo2SinceYear']
+
+for v in useless_features:
+    features.remove(v)
 
 def ToWeight(y):
     w = np.zeros(y.shape, dtype=float)
@@ -57,8 +62,25 @@ else:
 train = pd.merge(train_org,store, on='Store', how='left')
 test = pd.merge(test_org,store, on='Store', how='left')
 
+train['year'] = train.Date.apply(lambda x: x.split('-')[0])
+train['year'] = train['year'].astype(float)
+train['month'] = train.Date.apply(lambda x: x.split('-')[1])
+train['month'] = train['month'].astype(float)
+train['day'] = train.Date.apply(lambda x: x.split('-')[2])
+train['day'] = train['day'].astype(float)
+
+test['year'] = test.Date.apply(lambda x: x.split('-')[0])
+test['year'] = test['year'].astype(float)
+test['month'] = test.Date.apply(lambda x: x.split('-')[1])
+test['month'] = test['month'].astype(float)
+test['day'] = test.Date.apply(lambda x: x.split('-')[2])
+test['day'] = test['day'].astype(float)
+
 train = train.fillna(-1)
 test = test.fillna(-1)
+
+train = train[train['Open'] == 1]
+test = test[test['Open'] == 1]
 
 for f in train[features]:
     if train[f].dtype=='object':
@@ -67,8 +89,8 @@ for f in train[features]:
         train[f] = lbl.transform(list(train[f].values))
         test[f] = lbl.transform(list(test[f].values))
 
-regressor = XGBRegressor(n_estimators=100, nthread=-1, max_depth=6,
-                   learning_rate=0.01, silent=False, subsample=0.8, colsample_bytree=0.7)
+regressor = XGBRegressor(n_estimators=500, nthread=-1, max_depth=12,
+                   learning_rate=0.15, silent=True, subsample=0.8, colsample_bytree=0.7)
 
 start = time.time()
 if (gridsearch & sample): # only do gridsearch if we run with sampled data.
@@ -92,7 +114,7 @@ print '  -> Training time:', time.time() - start
 if sample:
     if not gridsearch:
         # Test results
-        print "RMSPE: " + str(rmspe(regressor.predict(np.array(test)),test[goal].values))
+        print "RMSPE: " + str(rmspe(regressor.predict(np.array(test[features])),test[goal].values))
 else:
     predictions = np.column_stack((test[myid], regressor.predict(np.array(test[features])))).tolist()
     predictions = [[int(i[0])] + i[1:] for i in predictions]
