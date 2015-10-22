@@ -79,8 +79,7 @@ test['day'] = test['day'].astype(float)
 train = train.fillna(-1)
 test = test.fillna(-1)
 
-train = train[train['Open'] == 1]
-test = test[test['Open'] == 1]
+train = train[train['Open'] == 1] # don't train data with open = 0
 
 for f in train[features]:
     if train[f].dtype=='object':
@@ -116,10 +115,16 @@ if sample:
         # Test results
         print "RMSPE: " + str(rmspe(regressor.predict(np.array(test[features])),test[goal].values))
 else:
-    predictions = np.column_stack((test[myid], regressor.predict(np.array(test[features])))).tolist()
-    predictions = [[int(i[0])] + i[1:] for i in predictions]
     csvfile = 'result/' + regressor.__class__.__name__ + '-submit.csv'
     with open(csvfile, 'w') as output:
+        predictions = []
+        for i in test[myid].tolist():
+            # stores that haven't opened will have 0 sales
+            if test[test[myid] == i]['Open'].item() == 0:
+                predictions += [[i,0]]
+            else:
+                # import pdb;pdb.set_trace()
+                predictions += [[i,regressor.predict(np.array(test[test[myid]==i][features]))[0]]]
         writer = csv.writer(output, lineterminator='\n')
         writer.writerow([myid,goal])
         writer.writerows(predictions)
