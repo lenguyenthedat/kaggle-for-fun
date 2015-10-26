@@ -78,6 +78,10 @@ test['month'] = test['month'].astype(float)
 test['day'] = test.Date.apply(lambda x: x.split('-')[2])
 test['day'] = test['day'].astype(float)
 
+# consider null as Open
+train.loc[train.Open.isnull(), 'Open'] = 1
+test.loc[test.Open.isnull(), 'Open'] = 1
+
 train = train.fillna(0)
 test = test.fillna(0)
 
