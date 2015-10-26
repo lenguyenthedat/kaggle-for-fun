@@ -10,7 +10,7 @@ from xgboost import XGBRegressor
 
 pd.options.mode.chained_assignment = None
 if not os.path.exists('result/'): os.makedirs('result/')
-sample = True
+sample = False
 gridsearch = False
 goal = 'Sales'
 myid = 'Id'
@@ -94,8 +94,8 @@ for f in train[features]:
         train[f] = lbl.transform(list(train[f].values))
         test[f] = lbl.transform(list(test[f].values))
 
-regressor = XGBRegressor(n_estimators=500, nthread=-1, max_depth=18,
-                   learning_rate=0.05, silent=False, subsample=0.8, colsample_bytree=0.7)
+regressor = XGBRegressor(n_estimators=3000, nthread=-1, max_depth=12,
+                   learning_rate=0.02, silent=True, subsample=0.9, colsample_bytree=0.7)
 
 start = time.time()
 if (gridsearch & sample): # only do gridsearch if we run with sampled data.
