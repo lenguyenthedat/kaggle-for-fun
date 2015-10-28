@@ -81,20 +81,20 @@ h<-sample(nrow(train),10000)
 dval<-xgb.DMatrix(data=data.matrix(tra[h,]),label=log(train$Sales+1)[h])
 dtrain<-xgb.DMatrix(data=data.matrix(tra[-h,]),label=log(train$Sales+1)[-h])
 watchlist<-list(val=dval,train=dtrain)
-param <- list(  objective           = "reg:linear", 
-                booster = "gbtree",
-                eta                 = 0.02, # 0.06, #0.01,
-                max_depth           = 10, #changed from default of 8
+param <- list(  objective           = "reg:linear",
+                booster             = "gbtree",
+                eta                 = 0.01, # 0.06, #0.01,
+                max_depth           = 13, #changed from default of 8
                 subsample           = 0.9, # 0.7
                 colsample_bytree    = 0.7 # 0.7
                 #num_parallel_tree   = 2
-                # alpha = 0.0001, 
+                # alpha = 0.0001,
                 # lambda = 1
 )
 
-clf <- xgb.train(   params              = param, 
-                    data                = dtrain, 
-                    nrounds             = 3000, #300, #280, #125, #250, # changed from 300
+clf <- xgb.train(   params              = param,
+                    data                = dtrain,
+                    nrounds             = 8000, #300, #280, #125, #250, # changed from 300
                     verbose             = 0,
                     early.stop.round    = 100,
                     watchlist           = watchlist,
