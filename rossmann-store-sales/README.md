@@ -11,3 +11,4 @@ https://www.kaggle.com/c/rossmann-store-sales
 - 6th version LB 0.10795 (local: 0.1107): native-xgb 3000r d10 lr 0.02 sample 0.9 0.7
 - 7th version LB 0.10640 (local: 0.1070): r version xgb 3000r d10 lr 0.02 sample 0.9 0.7
 - 8th version LB 0.10568 (local: 0.0993): r version xgb 8000r d13 lr 0.01 sample 0.9 0.7
+- 9th version LB 0.10858 my own xgb native implementation d13 eta0.01 ntree4000 mcw3.
