@@ -88,7 +88,7 @@ def process_data(train,test,features,features_non_numeric):
         data['promodec'] = data.PromoInterval.apply(lambda x: 0 if isinstance(x, float) else 1 if "Dec" in x else 0)
 
     # # Features set.
-    noisy_features = [myid]
+    noisy_features = [myid,'Date','PromoInterval']
     features = [c for c in features if c not in noisy_features]
     features_non_numeric = [c for c in features_non_numeric if c not in noisy_features]
     features.extend(['promojan','promofeb','promomar','promoapr','promomay','promojun',
@@ -141,23 +141,21 @@ def XGB_native(train,test,features,features_non_numeric):
               "silent": 1
               }
     print "Running with params: " + str(params)
+    print "Running with ntrees: " + str(ntrees)
     print "Running with features: " + str(features)
     if sample:
+        tsize = 0.05
+        X_train, X_test = cross_validation.train_test_split(train, test_size=tsize)
         cv = cross_validation.KFold(len(train), n_folds=5, shuffle=True, indices=False, random_state=1337)
-        results = []
-        for traincv, testcv in cv:
-            dtrain = xgb.DMatrix(train[traincv][features], np.log(train[traincv][goal] + 1))
-            dvalid = xgb.DMatrix(train[testcv][features], np.log(train[testcv][goal] + 1))
-            watchlist = [(dvalid, 'eval'), (dtrain, 'train')]
-            gbm = xgb.train(params, dtrain, ntrees, evals=watchlist, early_stopping_rounds=100, feval=rmspe_xg, verbose_eval=False)
-            train_probs = gbm.predict(xgb.DMatrix(train[testcv][features]))
-            indices = train_probs < 0
-            train_probs[indices] = 0
-            error = rmspe(np.exp(train_probs) - 1, train[testcv][goal].values)
-            print error
-            results.append(error)
-        print "Results: " + str(results)
-        print "Mean: " + str(np.array(results).mean())
+        dtrain = xgb.DMatrix(X_train[features], np.log(X_train[goal] + 1))
+        dvalid = xgb.DMatrix(X_test[features], np.log(X_test[goal] + 1))
+        watchlist = [(dvalid, 'eval'), (dtrain, 'train')]
+        gbm = xgb.train(params, dtrain, ntrees, evals=watchlist, early_stopping_rounds=100, feval=rmspe_xg, verbose_eval=True)
+        train_probs = gbm.predict(xgb.DMatrix(X_test[features]))
+        indices = train_probs < 0
+        train_probs[indices] = 0
+        error = rmspe(np.exp(train_probs) - 1, X_test[goal].values)
+        print error
     # EVAL OR EXPORT
     else: # Export result
         print str(datetime.datetime.now())
