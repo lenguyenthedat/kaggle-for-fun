@@ -15,8 +15,7 @@ from sklearn.base import TransformerMixin
 from sklearn import cross_validation
 from matplotlib import pylab as plt
 
-sample = True
-plot = True # Won't plot if sample = True
+plot = True
 
 goal = 'Sales'
 myid = 'Id'
@@ -88,11 +87,10 @@ def process_data(train,test,features,features_non_numeric):
         data['promodec'] = data.PromoInterval.apply(lambda x: 0 if isinstance(x, float) else 1 if "Dec" in x else 0)
 
     # # Features set.
-    noisy_features = [myid,'Date','PromoInterval']
+    noisy_features = [myid,'Date']
     features = [c for c in features if c not in noisy_features]
     features_non_numeric = [c for c in features_non_numeric if c not in noisy_features]
-    features.extend(['promojan','promofeb','promomar','promoapr','promomay','promojun',
-        'promojul','promoaug','promosep','promooct','promonov','promodec','year','month','day'])
+    features.extend(['year','month','day'])
     # Fill NA
     class DataFrameImputer(TransformerMixin):
         # http://stackoverflow.com/questions/25239958/impute-categorical-missing-values-in-scikit-learn
@@ -129,7 +127,7 @@ def process_data(train,test,features,features_non_numeric):
 def XGB_native(train,test,features,features_non_numeric):
     depth = 13
     eta = 0.01
-    ntrees = 4000
+    ntrees = 8000
     mcw = 3
     params = {"objective": "reg:linear",
               "booster": "gbtree",
@@ -143,50 +141,47 @@ def XGB_native(train,test,features,features_non_numeric):
     print "Running with params: " + str(params)
     print "Running with ntrees: " + str(ntrees)
     print "Running with features: " + str(features)
-    if sample:
-        tsize = 0.05
-        X_train, X_test = cross_validation.train_test_split(train, test_size=tsize)
-        cv = cross_validation.KFold(len(train), n_folds=5, shuffle=True, indices=False, random_state=1337)
-        dtrain = xgb.DMatrix(X_train[features], np.log(X_train[goal] + 1))
-        dvalid = xgb.DMatrix(X_test[features], np.log(X_test[goal] + 1))
-        watchlist = [(dvalid, 'eval'), (dtrain, 'train')]
-        gbm = xgb.train(params, dtrain, ntrees, evals=watchlist, early_stopping_rounds=100, feval=rmspe_xg, verbose_eval=True)
-        train_probs = gbm.predict(xgb.DMatrix(X_test[features]))
-        indices = train_probs < 0
-        train_probs[indices] = 0
-        error = rmspe(np.exp(train_probs) - 1, X_test[goal].values)
-        print error
-    # EVAL OR EXPORT
-    else: # Export result
-        print str(datetime.datetime.now())
-        dtrain = xgb.DMatrix(train[features], np.log(train[goal] + 1))
-        gbm = xgb.train(params, dtrain, ntrees, feval=rmspe_xg)
-        test_probs = gbm.predict(xgb.DMatrix(test[features]))
-        indices = test_probs < 0
-        test_probs[indices] = 0
-        submission = pd.DataFrame({myid: test[myid], goal: np.exp(test_probs) - 1})
-        if not os.path.exists('result/'):
-            os.makedirs('result/')
-        submission.to_csv("./result/dat-xgb_d%s_eta%s_ntree%s_mcw%s.csv" % (str(depth),str(eta),str(ntrees),str(mcw)) , index=False)
+
+    # Train model with local split
+    tsize = 0.05
+    X_train, X_test = cross_validation.train_test_split(train, test_size=tsize)
+    dtrain = xgb.DMatrix(X_train[features], np.log(X_train[goal] + 1))
+    dvalid = xgb.DMatrix(X_test[features], np.log(X_test[goal] + 1))
+    watchlist = [(dvalid, 'eval'), (dtrain, 'train')]
+    gbm = xgb.train(params, dtrain, ntrees, evals=watchlist, early_stopping_rounds=100, feval=rmspe_xg, verbose_eval=True)
+    train_probs = gbm.predict(xgb.DMatrix(X_test[features]))
+    indices = train_probs < 0
+    train_probs[indices] = 0
+    error = rmspe(np.exp(train_probs) - 1, X_test[goal].values)
+    print error
+
+    # Predict and Export
+    test_probs = gbm.predict(xgb.DMatrix(test[features]))
+    indices = test_probs < 0
+    test_probs[indices] = 0
+    submission = pd.DataFrame({myid: test[myid], goal: np.exp(test_probs) - 1})
+    if not os.path.exists('result/'):
+        os.makedirs('result/')
+    submission.to_csv("./result/dat-xgb_d%s_eta%s_ntree%s_mcw%s_tsize%s.csv" % (str(depth),str(eta),str(ntrees),str(mcw),str(tsize)) , index=False)
     # Feature importance
-        if plot:
-          outfile = open('xgb.fmap', 'w')
-          i = 0
-          for feat in features:
-              outfile.write('{0}\t{1}\tq\n'.format(i, feat))
-              i = i + 1
-          outfile.close()
-          importance = gbm.get_fscore(fmap='xgb.fmap')
-          importance = sorted(importance.items(), key=operator.itemgetter(1))
-          df = pd.DataFrame(importance, columns=['feature', 'fscore'])
-          df['fscore'] = df['fscore'] / df['fscore'].sum()
-          # Plotitup
-          plt.figure()
-          df.plot()
-          df.plot(kind='barh', x='feature', y='fscore', legend=False, figsize=(25, 15))
-          plt.title('XGBoost Feature Importance')
-          plt.xlabel('relative importance')
-          plt.gcf().savefig('Feature_Importance_xgb.png')
+    if plot:
+      outfile = open('xgb.fmap', 'w')
+      i = 0
+      for feat in features:
+          outfile.write('{0}\t{1}\tq\n'.format(i, feat))
+          i = i + 1
+      outfile.close()
+      importance = gbm.get_fscore(fmap='xgb.fmap')
+      importance = sorted(importance.items(), key=operator.itemgetter(1))
+      df = pd.DataFrame(importance, columns=['feature', 'fscore'])
+      df['fscore'] = df['fscore'] / df['fscore'].sum()
+      # Plotitup
+      plt.figure()
+      df.plot()
+      df.plot(kind='barh', x='feature', y='fscore', legend=False, figsize=(25, 15))
+      plt.title('XGBoost Feature Importance')
+      plt.xlabel('relative importance')
+      plt.gcf().savefig('Feature_Importance_xgb_d%s_eta%s_ntree%s_mcw%s_tsize%s.png' % (str(depth),str(eta),str(ntrees),str(mcw),str(tsize)))
 
 def main():
     print "=> Loading data - " + str(datetime.datetime.now())
