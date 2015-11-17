@@ -3,9 +3,10 @@ import time
 import csv
 import numpy as np
 import os
+import sys
 
-result = "./result/To Blend 14/0.10568 rf1-d13-8000r-0.01lr-Dat"
-submission = pd.read_csv(result+".csv")
+result = sys.argv[1]
+submission = pd.read_csv(result)
 
 # add x% growth rate into all sales predicted
 def fix_growth(row):
@@ -27,7 +28,7 @@ def fix_closed(row):
 
 # sort by id
 def fix_order(df):
-    return df.sort(['Id'], ascending=[1])
+    return df.sort_values(['Id'], ascending=[1])
 submission = fix_order(submission)
 
 submission.to_csv(result + "-fixed.csv", index=False)
