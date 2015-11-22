@@ -16,7 +16,7 @@ from sklearn.metrics import mean_absolute_error
 from sklearn import cross_validation
 from matplotlib import pylab as plt
 
-plot = False
+plot = True
 preprocessing = False # False when you already got train_agg and test_agg
 
 goal = 'Expected'
@@ -56,11 +56,12 @@ def process_data(train_org,test_org):
         # flatten
         print "Flatten data before learning - " + str(datetime.datetime.now())
         grouped = train_org.groupby('Id')
-        train = grouped.agg({'radardist_km' : [np.nanmean, np.max, np.min, np.sum, 'count'], 'Ref_5x5_50th' : [np.nanmean, np.max, np.min, np.sum, 'count'],
-                             'Ref_5x5_90th' : [np.nanmean, np.max, np.min, np.sum, 'count'], 'RefComposite' : [np.nanmean, np.max, np.min, np.sum, 'count'],
-                             'RefComposite_5x5_50th' : [np.nanmean, np.max, np.min, np.sum, 'count'], 'RefComposite_5x5_90th' : [np.nanmean, np.max, np.min, np.sum, 'count'],
-                             'Zdr' : [np.nanmean, np.max, np.min, np.sum, 'count'], 'Zdr_5x5_50th' :  [np.nanmean, np.max, np.min, np.sum, 'count'],
-                             'Zdr_5x5_90th' : [np.nanmean, np.max, np.min, np.sum, 'count'], 'Ref' :  [np.nanmean, np.max, np.min, np.sum, 'count'], 'Id' : [np.mean,'count'],
+        train = grouped.agg({'radardist_km' : [np.nanmean, np.max, np.sum, 'count'], 'Ref_5x5_50th' : [np.nanmean, np.max, np.min, np.sum],
+                             'Ref_5x5_90th' : [np.nanmean, np.max, np.min, np.sum], 'RefComposite' : [np.nanmean, np.max, np.min, np.sum],
+                             'RefComposite_5x5_50th' : [np.nanmean, np.max, np.min, np.sum], 'RefComposite_5x5_90th' : [np.nanmean, np.max, np.min, np.sum],
+                             'Zdr' : [np.nanmean, np.max, np.min, np.sum, 'count'], 'Zdr_5x5_50th' :  [np.nanmean, np.max, np.min, np.sum],
+                             'Zdr_5x5_90th' : [np.nanmean, np.max, np.min, np.sum], 'Ref' :  [np.nanmean, np.max, np.min, np.sum], 'Id' : np.mean,
+                             # 'minutes_past' : [np.nanmean, np.max, np.min],
                              'Expected' : np.mean
                             })
         train.columns = [' '.join(col).strip() for col in train.columns.values]
@@ -68,11 +69,12 @@ def process_data(train_org,test_org):
         train['Expected'] = train['Expected mean'].apply(lambda x: np.log1p(x))
 
         grouped = test_org.groupby('Id')
-        test = grouped.agg({'radardist_km' : [np.nanmean, np.max, np.min, np.sum, 'count'], 'Ref_5x5_50th' : [np.nanmean, np.max, np.min, np.sum, 'count'],
-                         'Ref_5x5_90th' : [np.nanmean, np.max, np.min, np.sum, 'count'], 'RefComposite' : [np.nanmean, np.max, np.min, np.sum, 'count'],
-                         'RefComposite_5x5_50th' : [np.nanmean, np.max, np.min, np.sum, 'count'], 'RefComposite_5x5_90th' : [np.nanmean, np.max, np.min, np.sum, 'count'],
-                         'Zdr' : [np.nanmean, np.max, np.min, np.sum, 'count'], 'Zdr_5x5_50th' : [np.nanmean, np.max, np.min, np.sum, 'count'],
-                         'Zdr_5x5_90th' : [np.nanmean, np.max, np.min, np.sum, 'count'], 'Ref' :  [np.nanmean, np.max, np.min, np.sum, 'count'], 'Id' : [np.mean,'count']
+        test = grouped.agg({'radardist_km' : [np.nanmean, np.max, np.sum, 'count'], 'Ref_5x5_50th' : [np.nanmean, np.max, np.min, np.sum],
+                         'Ref_5x5_90th' : [np.nanmean, np.max, np.min, np.sum], 'RefComposite' : [np.nanmean, np.max, np.min, np.sum],
+                         'RefComposite_5x5_50th' : [np.nanmean, np.max, np.min, np.sum], 'RefComposite_5x5_90th' : [np.nanmean, np.max, np.min, np.sum],
+                         'Zdr' : [np.nanmean, np.max, np.min, np.sum, 'count'], 'Zdr_5x5_50th' : [np.nanmean, np.max, np.min, np.sum],
+                         'Zdr_5x5_90th' : [np.nanmean, np.max, np.min, np.sum], 'Ref' :  [np.nanmean, np.max, np.min, np.sum], 'Id' : np.mea
+                         # , 'minutes_past' : [np.nanmean, np.max, np.min]
                         })
         test.columns = [' '.join(col).strip() for col in test.columns.values]
         test.rename(columns={'Id mean':'Id'}, inplace=True)
@@ -98,9 +100,9 @@ def process_data(train_org,test_org):
     return (train,test,features)
 
 def XGB_native(train,test,features):
-    depth = 23
+    depth = 19
     eta = 0.025
-    ntrees = 2000
+    ntrees = 1773
     mcw = 1
     params = {"objective": "reg:linear",
               "booster": "gbtree",
@@ -122,6 +124,12 @@ def XGB_native(train,test,features):
     dvalid = xgb.DMatrix(X_test[features], X_test[goal])
     watchlist = [(dvalid, 'eval'), (dtrain, 'train')]
     gbm = xgb.train(params, dtrain, ntrees, evals=watchlist, early_stopping_rounds=100, verbose_eval=True)
+    # # Custom MAE function
+    # def mae(preds, dtrain):
+    #     labels = dtrain.get_label()
+    # # return a pair metric_name, result
+    #     return 'MAE', mean_absolute_error(labels, preds)
+    # gbm = xgb.train(params, dtrain, ntrees, evals=watchlist, early_stopping_rounds=100, verbose_eval=True, feval=mae)
     train_probs = gbm.predict(xgb.DMatrix(X_test[features]))
     indices = train_probs < 0
     train_probs[indices] = 0
