@@ -42,6 +42,9 @@ def process_data(train_org,test_org):
         # remove out-liners
         print "Remove out-liners - " + str(datetime.datetime.now())
         train_org = train_org[train_org['Expected'] < 69]
+        # print "Remove NA ref - " + str(datetime.datetime.now())
+        # train_org = train_org[np.isfinite(train_org['Ref'])]
+        # test_org = test_org[np.isfinite(test_org['Ref'])]
 
         # force NA for these Refs
         print "Forcing NA for refs less than 0 - " + str(datetime.datetime.now())
@@ -56,12 +59,12 @@ def process_data(train_org,test_org):
         # flatten
         print "Flatten data before learning - " + str(datetime.datetime.now())
         grouped = train_org.groupby('Id')
-        train = grouped.agg({'radardist_km' : [np.nanmean, np.max, np.sum, 'count'], 'Ref_5x5_50th' : [np.nanmean, np.max, np.min, np.sum],
-                             'Ref_5x5_90th' : [np.nanmean, np.max, np.min, np.sum], 'RefComposite' : [np.nanmean, np.max, np.min, np.sum],
-                             'RefComposite_5x5_50th' : [np.nanmean, np.max, np.min, np.sum], 'RefComposite_5x5_90th' : [np.nanmean, np.max, np.min, np.sum],
-                             'Zdr' : [np.nanmean, np.max, np.min, np.sum, 'count'], 'Zdr_5x5_50th' :  [np.nanmean, np.max, np.min, np.sum],
-                             'Zdr_5x5_90th' : [np.nanmean, np.max, np.min, np.sum], 'Ref' :  [np.nanmean, np.max, np.min, np.sum], 'Id' : np.mean,
-                             # 'minutes_past' : [np.nanmean, np.max, np.min],
+        train = grouped.agg({'radardist_km' : [np.nanmean, np.max, 'count'], 'Ref_5x5_50th' : [np.nanmean, np.max, np.min],
+                             'Ref_5x5_90th' : [np.nanmean, np.max, np.min], 'RefComposite' : [np.nanmean, np.max, np.min],
+                             'RefComposite_5x5_50th' : [np.nanmean, np.max, np.min], 'RefComposite_5x5_90th' : [np.nanmean, np.max, np.min],
+                             'Zdr' : [np.nanmean, np.max, np.min, 'count'], 'Zdr_5x5_50th' :  [np.nanmean, np.max, np.min],
+                             'Zdr_5x5_90th' : [np.nanmean, np.max, np.min], 'Ref' :  [np.nanmean, np.max, np.min], 'Id' : np.mean,
+                             'minutes_past' : [np.nanmean, np.max, np.min],
                              'Expected' : np.mean
                             })
         train.columns = [' '.join(col).strip() for col in train.columns.values]
@@ -69,12 +72,12 @@ def process_data(train_org,test_org):
         train['Expected'] = train['Expected mean'].apply(lambda x: np.log1p(x))
 
         grouped = test_org.groupby('Id')
-        test = grouped.agg({'radardist_km' : [np.nanmean, np.max, np.sum, 'count'], 'Ref_5x5_50th' : [np.nanmean, np.max, np.min, np.sum],
-                         'Ref_5x5_90th' : [np.nanmean, np.max, np.min, np.sum], 'RefComposite' : [np.nanmean, np.max, np.min, np.sum],
-                         'RefComposite_5x5_50th' : [np.nanmean, np.max, np.min, np.sum], 'RefComposite_5x5_90th' : [np.nanmean, np.max, np.min, np.sum],
-                         'Zdr' : [np.nanmean, np.max, np.min, np.sum, 'count'], 'Zdr_5x5_50th' : [np.nanmean, np.max, np.min, np.sum],
-                         'Zdr_5x5_90th' : [np.nanmean, np.max, np.min, np.sum], 'Ref' :  [np.nanmean, np.max, np.min, np.sum], 'Id' : np.mea
-                         # , 'minutes_past' : [np.nanmean, np.max, np.min]
+        test = grouped.agg({'radardist_km' : [np.nanmean, np.max], 'Ref_5x5_50th' : [np.nanmean, np.max, np.min],
+                         'Ref_5x5_90th' : [np.nanmean, np.max, np.min], 'RefComposite' : [np.nanmean, np.max, np.min],
+                         'RefComposite_5x5_50th' : [np.nanmean, np.max, np.min], 'RefComposite_5x5_90th' : [np.nanmean, np.max, np.min],
+                         'Zdr' : [np.nanmean, np.max, np.min], 'Zdr_5x5_50th' : [np.nanmean, np.max, np.min],
+                         'Zdr_5x5_90th' : [np.nanmean, np.max, np.min], 'Ref' :  [np.nanmean, np.max, np.min], 'Id' : np.mean,
+                         'minutes_past' : [np.nanmean, np.max, np.min]
                         })
         test.columns = [' '.join(col).strip() for col in test.columns.values]
         test.rename(columns={'Id mean':'Id'}, inplace=True)
@@ -83,7 +86,9 @@ def process_data(train_org,test_org):
         train = train_org
     # Features set.
     features = test.columns.tolist()
-    noisy_features = ['Id']
+    noisy_features = ['Id','radardist_km amin','Ref_5x5_50th count','RefComposite_5x5_50th count','Zdr count',
+                      'radardist_km count','RefComposite count','Ref count','minutes_past count','Ref_5x5_90th count',
+                      'Zdr_5x5_50th count','Zdr_5x5_90th count','Id count','RefComposite_5x5_90th count']
     features = [c for c in features if c not in noisy_features]
     features.extend([])
     # Fill NA
@@ -100,17 +105,17 @@ def process_data(train_org,test_org):
     return (train,test,features)
 
 def XGB_native(train,test,features):
-    depth = 19
+    depth = 21
     eta = 0.025
-    ntrees = 1773
+    ntrees = 2000
     mcw = 1
     params = {"objective": "reg:linear",
               "booster": "gbtree",
               "eta": eta,
               "max_depth": depth,
               "min_child_weight": mcw,
-              "subsample": 1,
-              "colsample_bytree": 0.8,
+              "subsample": 0.7,
+              "colsample_bytree": 0.7,
               "silent": 1
               }
     print "Running with params: " + str(params)
@@ -119,21 +124,21 @@ def XGB_native(train,test,features):
 
     # Train model with local split
     tsize = 0.05 # 5% split
-    X_train, X_test = cross_validation.train_test_split(train, test_size=tsize)
+    X_train, X_test = cross_validation.train_test_split(train, test_size=tsize, random_state=1337)
     dtrain = xgb.DMatrix(X_train[features], X_train[goal])
     dvalid = xgb.DMatrix(X_test[features], X_test[goal])
     watchlist = [(dvalid, 'eval'), (dtrain, 'train')]
-    gbm = xgb.train(params, dtrain, ntrees, evals=watchlist, early_stopping_rounds=100, verbose_eval=True)
-    # # Custom MAE function
-    # def mae(preds, dtrain):
-    #     labels = dtrain.get_label()
-    # # return a pair metric_name, result
-    #     return 'MAE', mean_absolute_error(labels, preds)
-    # gbm = xgb.train(params, dtrain, ntrees, evals=watchlist, early_stopping_rounds=100, verbose_eval=True, feval=mae)
+    # Custom MAE function
+    def mae(preds, dtrain):
+        labels = dtrain.get_label()
+    # return a pair metric_name, result
+        return 'MAE', mean_absolute_error(labels, preds)
+    gbm = xgb.train(params, dtrain, ntrees, evals=watchlist, early_stopping_rounds=100, verbose_eval=True, feval=mae)
+    # rmse
+    # gbm = xgb.train(params, dtrain, ntrees, evals=watchlist, early_stopping_rounds=100, verbose_eval=True)
     train_probs = gbm.predict(xgb.DMatrix(X_test[features]))
-    indices = train_probs < 0
-    train_probs[indices] = 0
-    print mean_absolute_error(train_probs,X_test[goal].values)
+    print "Actual MAE (after expm1):"
+    print mean_absolute_error(np.expm1(train_probs),np.expm1(X_test[goal].values))
 
     # Predict and Export
     test_probs = gbm.predict(xgb.DMatrix(test[features]))
