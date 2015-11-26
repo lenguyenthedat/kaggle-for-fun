@@ -1,3 +1,4 @@
+import time
 import sys
 import pandas as pd
 import datetime
@@ -15,6 +16,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_absolute_error
 from sklearn import cross_validation
 from matplotlib import pylab as plt
+from sknn.mlp import Regressor, Layer, Convolution
 
 plot = True
 preprocessing = False # False when you already got train_agg and test_agg
@@ -123,7 +125,7 @@ def XGB_native(train,test,features):
     print "Running with features: " + str(features)
 
     # Train model with local split
-    tsize = 0.05 # 5% split
+    tsize = 0.01 # 1% split
     X_train, X_test = cross_validation.train_test_split(train, test_size=tsize, random_state=1337)
     dtrain = xgb.DMatrix(X_train[features], X_train[goal])
     dvalid = xgb.DMatrix(X_test[features], X_test[goal])
@@ -170,15 +172,53 @@ def XGB_native(train,test,features):
       plt.title('XGBoost Feature Importance')
       plt.xlabel('relative importance')
       plt.gcf().savefig('./result/Feature_Importance_xgb_d%s_eta%s_ntree%s_mcw%s_tsize%s.png' % (str(depth),str(eta),str(ntrees),str(mcw),str(tsize)))
-    return result_file
 
+def NeuralNet(train,test,features):
+    eta = 0.025
+    niter = 2000
+
+    regressor = Regressor(
+                      layers=[
+                          Layer('Rectifier', units=100),
+                          Layer("Tanh", units=100),
+                          Layer("Sigmoid", units=100),
+                          Layer('Linear')],
+                      learning_rate=eta,
+                      learning_rule='momentum',
+                      learning_momentum=0.9,
+                      batch_size=100,
+                      valid_size=0.01,
+                      n_stable=100,
+                      n_iter=niter,
+                      verbose=True)
+
+    print regressor.__class__.__name__
+    start = time.time()
+    regressor.fit(np.array(train[list(features)]), train[goal])
+    print '  -> Training time:', time.time() - start
+
+    if not os.path.exists('result/'):
+        os.makedirs('result/')
+    # TODO: fix this shit
+    predictions = regressor.predict(np.array(test[features]))
+    try: # try to flatten a list that might be flattenable.
+        predictions = list(itertools.chain.from_iterable(predictions))
+    except:
+        pass
+    csvfile = 'result/dat-nnet-eta%s-niter%s.csv' % (str(eta),str(niter))
+    with open(csvfile, 'w') as output:
+        writer = csv.writer(output, lineterminator='\n')
+        writer.writerow([myid,goal])
+        for i in range(0, len(predictions)):
+            writer.writerow([i+1,predictions[i]])
 def main():
     print "=> Loading data - " + str(datetime.datetime.now())
     train_org,test_org = load_data()
     print "=> Processing data - " + str(datetime.datetime.now())
     train,test,features = process_data(train_org,test_org)
     print "=> XGBoost in action - " + str(datetime.datetime.now())
-    result_file = XGB_native(train,test,features)
+    # XGB_native(train,test,features)
+    NeuralNet(train,test,features)
 
 if __name__ == "__main__":
     main()
