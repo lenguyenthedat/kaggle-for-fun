@@ -19,7 +19,7 @@ from matplotlib import pylab as plt
 from sknn.mlp import Regressor, Layer, Convolution
 
 plot = True
-preprocessing = False # False when you already got train_agg and test_agg
+preprocessing = True # False when you already got train_agg and test_agg
 
 goal = 'Expected'
 myid = 'Id'
@@ -61,11 +61,11 @@ def process_data(train_org,test_org):
         # flatten
         print "Flatten data before learning - " + str(datetime.datetime.now())
         grouped = train_org.groupby('Id')
-        train = grouped.agg({'radardist_km' : [np.nanmean, np.max, 'count'], 'Ref_5x5_50th' : [np.nanmean, np.max, np.min],
+        train = grouped.agg({'radardist_km' : [np.nanmean, np.max], 'Ref_5x5_50th' : [np.nanmean, np.max, np.min],
                              'Ref_5x5_90th' : [np.nanmean, np.max, np.min], 'RefComposite' : [np.nanmean, np.max, np.min],
                              'RefComposite_5x5_50th' : [np.nanmean, np.max, np.min], 'RefComposite_5x5_90th' : [np.nanmean, np.max, np.min],
-                             'Zdr' : [np.nanmean, np.max, np.min, 'count'], 'Zdr_5x5_50th' :  [np.nanmean, np.max, np.min],
-                             'Zdr_5x5_90th' : [np.nanmean, np.max, np.min], 'Ref' :  [np.nanmean, np.max, np.min], 'Id' : np.mean,
+                             'Zdr' : [np.nanmean, np.max, np.min], 'Zdr_5x5_50th' :  [np.nanmean, np.max, np.min],
+                             'Zdr_5x5_90th' : [np.nanmean, np.max, np.min], 'Ref' :  [np.nanmean, np.max, np.min], 'Id' : [np.mean, 'count'],
                              'minutes_past' : [np.nanmean, np.max, np.min],
                              'Expected' : np.mean
                             })
@@ -78,7 +78,7 @@ def process_data(train_org,test_org):
                          'Ref_5x5_90th' : [np.nanmean, np.max, np.min], 'RefComposite' : [np.nanmean, np.max, np.min],
                          'RefComposite_5x5_50th' : [np.nanmean, np.max, np.min], 'RefComposite_5x5_90th' : [np.nanmean, np.max, np.min],
                          'Zdr' : [np.nanmean, np.max, np.min], 'Zdr_5x5_50th' : [np.nanmean, np.max, np.min],
-                         'Zdr_5x5_90th' : [np.nanmean, np.max, np.min], 'Ref' :  [np.nanmean, np.max, np.min], 'Id' : np.mean,
+                         'Zdr_5x5_90th' : [np.nanmean, np.max, np.min], 'Ref' :  [np.nanmean, np.max, np.min], 'Id' : [np.mean, 'count'],
                          'minutes_past' : [np.nanmean, np.max, np.min]
                         })
         test.columns = [' '.join(col).strip() for col in test.columns.values]
@@ -88,9 +88,7 @@ def process_data(train_org,test_org):
         train = train_org
     # Features set.
     features = test.columns.tolist()
-    noisy_features = ['Id','radardist_km amin','Ref_5x5_50th count','RefComposite_5x5_50th count','Zdr count',
-                      'radardist_km count','RefComposite count','Ref count','minutes_past count','Ref_5x5_90th count',
-                      'Zdr_5x5_50th count','Zdr_5x5_90th count','Id count','RefComposite_5x5_90th count']
+    noisy_features = ['Id']
     features = [c for c in features if c not in noisy_features]
     features.extend([])
     # Fill NA
@@ -217,8 +215,8 @@ def main():
     print "=> Processing data - " + str(datetime.datetime.now())
     train,test,features = process_data(train_org,test_org)
     print "=> XGBoost in action - " + str(datetime.datetime.now())
-    # XGB_native(train,test,features)
-    NeuralNet(train,test,features)
+    XGB_native(train,test,features)
+    # NeuralNet(train,test,features)
 
 if __name__ == "__main__":
     main()
