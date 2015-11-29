@@ -10,7 +10,7 @@ submission = pd.read_csv(result)
 
 # add x% growth rate into all sales predicted
 def fix_growth(row):
-    return row['Sales']*1.002
+    return row['Sales']*0.99
 submission['Sales'] = submission.apply(fix_growth, axis=1)
 
 # closed store will have zero sales - doesn't matter for the eval
@@ -29,6 +29,6 @@ def fix_closed(row):
 # sort by id
 def fix_order(df):
     return df.sort_values(['Id'], ascending=[1])
-submission = fix_order(submission)
+# submission = fix_order(submission)
 
 submission.to_csv(result + "-fixed.csv", index=False)
