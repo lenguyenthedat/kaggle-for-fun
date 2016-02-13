@@ -12,14 +12,14 @@ warnings.filterwarnings("ignore")
 
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn import cross_validation, metrics
-from matplotlib import pylab as plt
 
-seed = 1337331
-plot = False
-sample = True
+seed = 1337
 
 goal = 'QuoteConversion_Flag'
 myid = 'QuoteNumber'
+
+if not os.path.exists('./result/'):
+    os.makedirs('./result/')
 
 def load_data():
     """
@@ -28,7 +28,6 @@ def load_data():
     train = pd.read_csv('./data/train.csv')
     test = pd.read_csv('./data/test.csv')
     features = test.columns.tolist()
-    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
     return (train,test,features)
 
 def process_data(train,test,features):
@@ -48,13 +47,63 @@ def process_data(train,test,features):
     test['Month'] = test['Original_Quote_Date'].apply(lambda x: int(str(x)[5:7]))
     test['Weekday'] = test['Original_Quote_Date'].dt.dayofweek
 
-    # # Features set.
-    noisy_features = [myid,'Original_Quote_Date']
+    grams_binary = ['Field12','PersonalField7','PropertyField3','PropertyField4','PropertyField5',
+             'PropertyField30','PropertyField32','PropertyField34','PropertyField36','PropertyField37',
+             'PropertyField38','GeographicField63','Month', 'Weekday']
+
+    two_grams_binary = []
+    for i in range(len(grams_binary)):
+        for j in range(i+1,len(grams_binary)):
+            two_gram = grams_binary[i] + '_' + grams_binary[j]
+            two_grams_binary += [two_gram]
+            train[two_gram] = train[grams_binary[i]].map(str) + '_' + train[grams_binary[j]].map(str)
+            test[two_gram] = test[grams_binary[i]].map(str) + '_' + test[grams_binary[j]].map(str)
+
+    grams = ['Field6','CoverageField8','CoverageField9','SalesField7','PersonalField16',
+             'PersonalField17', 'PersonalField18','PersonalField19','PropertyField7',
+             'PropertyField14','PropertyField28','PropertyField31','PropertyField33',
+             'GeographicField64','Month', 'Weekday']
+
+    two_grams = []
+    for i in range(len(grams)):
+        for j in range(i+1,len(grams)):
+            two_gram = grams[i] + '_' + grams[j]
+            two_grams += [two_gram]
+            train[two_gram] = train[grams[i]].map(str) + '_' + train[grams[j]].map(str)
+            test[two_gram] = test[grams[i]].map(str) + '_' + test[grams[j]].map(str)
+
+    arithmetics = ['SalesField5','PersonalField9','Field7','PersonalField2','PersonalField1',
+                   'SalesField1A','SalesField4','PersonalField10A','SalesField1B','PersonalField10B',
+                   'PersonalField13','PersonalField4A','PersonalField27']
+
+    two_arithmetics = []
+    for i in range(len(arithmetics)):
+        for j in range(i+1,len(arithmetics)):
+            # products
+            two_arithmetic1 = arithmetics[i] + 'times' + arithmetics[j]
+            two_arithmetics += [two_arithmetic1]
+            train[two_arithmetic1] = train[arithmetics[i]] * train[arithmetics[j]]
+            test[two_arithmetic1] = test[arithmetics[i]] * test[arithmetics[j]]
+            # divisions
+            two_arithmetic2 = arithmetics[i] + 'divs' + arithmetics[j]
+            two_arithmetics += [two_arithmetic2]
+            train[two_arithmetic2] = train[arithmetics[i]] / train[arithmetics[j]]
+            test[two_arithmetic2] = test[arithmetics[i]] / test[arithmetics[j]]
+
+    noisy_features = [myid,'Original_Quote_Date'] + grams + grams_binary + arithmetics
+
     features = [c for c in features if c not in noisy_features]
     features.extend(['Year','Month','Weekday'])
+    features.extend(two_grams_binary)
+    features.extend(two_grams)
+    features.extend(two_arithmetics)
+    features = list(set(features))
+
     # Fill NA
-    train = train.fillna(-1)
-    test = test.fillna(-1)
+    train['PropertyField29'] = train['PropertyField29'].fillna(-1)
+    test['PropertyField29'] = test['PropertyField29'].fillna(-1)
+    train = train.fillna(0)
+    test = test.fillna(0)
 
     # Pre-processing non-numberic values
     for f in train.columns:
@@ -65,16 +114,17 @@ def process_data(train,test,features):
             test[f] = lbl.transform(list(test[f].values))
     # Scale features
     scaler = StandardScaler()
-    for col in set(features):
+    for col in ['Field8','Field9','Field10','Field11','SalesField8']: # need to be scaled
         scaler.fit(list(train[col])+list(test[col]))
         train[col] = scaler.transform(train[col])
         test[col] = scaler.transform(test[col])
+
     return (train,test,features)
 
 def XGB_native(train,test,features):
-    depth = 6
-    eta = 0.025
-    ntrees = 1800
+    depth = 5
+    eta = 0.01
+    ntrees = 6238
     mcw = 1
     params = {"objective": "multi:softprob", 'num_class':2,
               "eval_metric":"auc",
@@ -82,75 +132,32 @@ def XGB_native(train,test,features):
               "max_depth": depth,
               "min_child_weight": mcw,
               "subsample": 0.9,
-              "colsample_bytree": 0.7,
+              "colsample_bytree": 0.77,
               "silent": 1
               }
+
     print "Running with params: " + str(params)
     print "Running with ntrees: " + str(ntrees)
     print "Running with "+ str(len(features)) + " features ..."
 
-    # Training / Cross Validation
-    if sample:
-        cv = cross_validation.StratifiedKFold(train[goal],5, shuffle=True, random_state=2015)
-        results = []
-        for traincv, testcv in cv:
-            # import pdb; pdb.Pdb().set_trace()
-            xgbtrain = xgb.DMatrix(train.iloc[traincv][list(features)], label=train.iloc[traincv][goal])
-            classifier = xgb.train(params, xgbtrain, ntrees)
-            # http://scikit-learn.org/stable/modules/generated/sklearn.metrics.auc.html
-            y = train.iloc[testcv][goal].values
-            pred = np.compress([False, True], classifier.predict(xgb.DMatrix(train.iloc[testcv][features])), axis=1)
-            fpr, tpr, thresholds = metrics.roc_curve(y, pred)
-            score = metrics.auc(fpr, tpr)
-            print score
-            results.append(score)
-        print "Results: " + str(results)
-        print "Mean: " + str(np.array(results).mean())
+    print str(datetime.datetime.now())
+    xgbtrain = xgb.DMatrix(train[features], label=train[goal])
+    classifier = xgb.train(params, xgbtrain, ntrees)
 
-    # EVAL OR EXPORT
-    else: # Export result
-        print str(datetime.datetime.now())
-        xgbtrain = xgb.DMatrix(train[features], label=train[goal])
-        classifier = xgb.train(params, xgbtrain, ntrees)
-        if not os.path.exists('result/'):
-            os.makedirs('result/')
-        csvfile = "./result/dat-xgb_d%s_eta%s_ntree%s_mcw%s_%sfeatures.csv" % (str(depth),str(eta),str(ntrees),str(mcw),str(len(features)))
-
-        with open(csvfile, 'w') as output:
-            predictions = []
-            print str(datetime.datetime.now())
-            for i in test[myid].tolist():
-                predictions += [[i,classifier.predict(xgb.DMatrix(test[test[myid]==i][features])).tolist()[0][1]]]
-            writer = csv.writer(output, lineterminator='\n')
-            writer.writerow([myid,goal])
-            writer.writerows(predictions)
-            print str(datetime.datetime.now())
-        # Feature importance
-        if plot:
-          outfile = open('xgb.fmap', 'w')
-          i = 0
-          for feat in features:
-              outfile.write('{0}\t{1}\tq\n'.format(i, feat))
-              i = i + 1
-          outfile.close()
-          importance = classifier.get_fscore(fmap='xgb.fmap')
-          importance = sorted(importance.items(), key=operator.itemgetter(1))
-          df = pd.DataFrame(importance, columns=['feature', 'fscore'])
-          df['fscore'] = df['fscore'] / df['fscore'].sum()
-          # Plotitup
-          plt.figure()
-          df.plot()
-          df.plot(kind='barh', x='feature', y='fscore', legend=False, figsize=(25, 15))
-          plt.title('XGBoost Feature Importance')
-          plt.xlabel('relative importance')
-          plt.gcf().savefig('Feature_Importance_xgb.png')
+    pred = np.compress([False, True], classifier.predict(xgb.DMatrix(test[features])), axis=1)
+    predictions_df = pd.DataFrame()
+    predictions_df[myid] = test[myid]
+    predictions_df[goal] = pred
+    predictions_df = predictions_df.sort(columns=myid,ascending=True)
+    csvfile = "./result/dat-xgb_d%s_eta%s_ntree%s_mcw%s_%sfeatures.csv" % (str(depth),str(eta),str(ntrees),str(mcw),str(len(features)))
+    predictions_df.to_csv(csvfile,index=False)
 
 def main():
     print "=> Loading data - " + str(datetime.datetime.now())
     train,test,features = load_data()
     print "=> Processing data - " + str(datetime.datetime.now())
     train,test,features = process_data(train,test,features)
-    print "=> XGBoost in action - " + str(datetime.datetime.now())
+    print "=> ML in action - " + str(datetime.datetime.now())
     XGB_native(train,test,features)
 
 if __name__ == "__main__":
