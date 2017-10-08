@@ -1,4 +1,4 @@
-import pandas as pd
+##import pandas as pd
 import datetime
 import csv
 import numpy as np
@@ -25,8 +25,8 @@ def load_data():
     """
         Load data and specified features of the data sets
     """
-    train = pd.read_csv('./data/train.csv')
-    test = pd.read_csv('./data/test.csv')
+    train = pd.read_csv('./data/train1000.csv')
+    test = pd.read_csv('./data/test1000.csv')
     features = test.columns.tolist()
     return (train,test,features)
 
