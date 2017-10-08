@@ -119,9 +119,9 @@ def process_data(train,test,features,features_non_numeric):
     scaler = StandardScaler()
     for col in set(features) - set(features_non_numeric) - \
       set([]): # TODO: add what not to scale
-        scaler.fit(list(train[col])+list(test[col]))
-        train[col] = scaler.transform(train[col])
-        test[col] = scaler.transform(test[col])
+        scaler.fit(np.reshape(list(train[col])+list(test[col]), (-1,1)))
+        train[col] = scaler.transform(np.reshape(train[col], (-1,1)))
+        test[col] = scaler.transform(np.reshape(test[col], (-1,1)))
     return (train,test,features,features_non_numeric)
 
 def XGB_native(train,test,features,features_non_numeric):

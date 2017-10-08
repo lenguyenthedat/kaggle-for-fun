@@ -18,7 +18,7 @@ from sklearn import cross_validation
 from sklearn.metrics import roc_auc_score
 from time import strptime
 
-sample = True
+sample = False
 
 goal = 'target'
 myid = 'ID'
@@ -121,9 +121,9 @@ def process_data(train,test,features,features_non_numeric):
     scaler = StandardScaler()
     for col in set(features) - set(features_non_numeric):
         # print col
-        scaler.fit(list(train[col])+list(test[col]))
-        train[col] = scaler.transform(train[col])
-        test[col] = scaler.transform(test[col])
+        scaler.fit(np.reshape(list(train[col])+list(test[col]), (-1,1)))
+        train[col] = scaler.transform(np.reshape(train[col], (-1,1)))
+        test[col] = scaler.transform(np.reshape(test[col], (-1,1)))
     return (train,test,features)
 
 def XGB_native(train,test,features):
