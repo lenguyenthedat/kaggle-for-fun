@@ -25,16 +25,12 @@ myid = 'Id'
 
 # Load data
 if sample: # To run with 100k data
-    if random:
-        df = pd.read_csv('./data/train-100000',dtype={'Category':pd.np.string_})
-        train, test = utils.random_train_test_split(df)
-    else: # Use data set that is pre-randomized and splitted.
-        train = pd.read_csv('./data/train-100000R',dtype={'Category':pd.np.string_})
-        test = pd.read_csv('./data/test-100000R',dtype={'Category':pd.np.string_})
+    utils.load_data('./data/train-100000',
+                    train_csv_file='./data/train-100000R', test_csv_file='./data/test-100000R',
+                    random=random, dtype={'Category': pd.np.string_})
 else:
     # To run with real data
-    train = pd.read_csv('./data/train.csv')
-    test = pd.read_csv('./data/test.csv')
+    train, test = utils.read_csv_files('./data/train.csv', './data/test.csv')
 
 features = ['Dates','hour','dark','DayOfWeek','PdDistrict','StreetNo','Address','X','Y']
 train['StreetNo'] = train['Address'].apply(lambda x: x.split(' ', 1)[0] if x.split(' ', 1)[0].isdigit() else 0)

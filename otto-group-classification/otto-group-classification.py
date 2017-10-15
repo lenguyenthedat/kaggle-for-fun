@@ -37,8 +37,7 @@ if sample: # To run with 100k data
 
 else:
     # To run with real data
-    train = pd.read_csv('./data/train.csv')
-    test = pd.read_csv('./data/test.csv')
+    train, test = utils.read_csv_files('./data/train.csv', './data/test.csv')
 
 # Neural Network, Stochastic Gradient Descent is sensitive to feature scaling, so it is highly recommended to scale your data.
 scaler = StandardScaler()

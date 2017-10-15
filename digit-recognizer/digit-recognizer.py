@@ -23,12 +23,10 @@ myid = 'ImageId'
 
 # Load data
 if sample: # To run with 5k data
-    df = pd.read_csv('./data/train-1000.csv')
-    train, test = utils.random_train_test_split(df)
+    train, test = utils.load_data('./data/train-1000.csv')
 else:
     # To run with real data
-    train = pd.read_csv('./data/train.csv')
-    test = pd.read_csv('./data/test.csv')
+    train, test = utils.read_csv_files('./data/train.csv', './data/test.csv')
 
 features = test.columns.tolist()
 if sample:

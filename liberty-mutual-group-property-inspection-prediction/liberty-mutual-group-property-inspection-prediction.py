@@ -56,15 +56,13 @@ myid = 'Id'
 # Load data
 if sample: # To train with 75% data
     if gridsearch:
-        train = pd.read_csv('./data/train.csv')
-        test = pd.read_csv('./data/test.csv')
+        train, test = utils.read_csv_files('./data/train.csv', './data/test.csv')
     else:
         df = pd.read_csv('./data/train.csv',dtype={'Category':pd.np.string_})
         train, test = utils.random_train_test_split(df)
 else:
     # To run with real data
-    train = pd.read_csv('./data/train.csv')
-    test = pd.read_csv('./data/test.csv')
+    train, test = utils.read_csv_files('./data/train.csv', './data/test.csv')
 
 # Pre-processing non-number values
 le = LabelEncoder()
