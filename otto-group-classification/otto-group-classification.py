@@ -3,6 +3,7 @@ import time
 import csv
 import numpy as np
 import os
+import utils
 from sklearn.metrics import log_loss
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -32,8 +33,7 @@ features = ['feat_1','feat_2','feat_3','feat_4','feat_5','feat_6','feat_7',
 # Load data
 if sample: # To run with 100k data
     df = pd.read_csv('./data/train.csv',dtype={'target':pd.np.string_})
-    df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
-    train, test = df[df['is_train']==True], df[df['is_train']==False]
+    train, test = utils.random_train_test_split(df)
 
 else:
     # To run with real data

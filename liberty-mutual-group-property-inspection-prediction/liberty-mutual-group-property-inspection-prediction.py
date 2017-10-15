@@ -3,6 +3,7 @@ import time
 import csv
 import numpy as np
 import os
+import utils
 
 from sklearn.metrics import mean_squared_error, make_scorer
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
@@ -59,8 +60,7 @@ if sample: # To train with 75% data
         test = pd.read_csv('./data/test.csv')
     else:
         df = pd.read_csv('./data/train.csv',dtype={'Category':pd.np.string_})
-        df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
-        train, test = df[df['is_train']==True], df[df['is_train']==False]
+        train, test = utils.random_train_test_split(df)
 else:
     # To run with real data
     train = pd.read_csv('./data/train.csv')

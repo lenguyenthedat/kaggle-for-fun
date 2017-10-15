@@ -3,6 +3,7 @@ import time
 import csv
 import numpy as np
 import os
+import utils
 from sklearn.metrics import log_loss, mean_squared_error
 from sklearn.linear_model import SGDClassifier
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier, GradientBoostingClassifier
@@ -28,8 +29,7 @@ features = ['hour','day','dow','C1','banner_pos','device_type','device_conn_type
 if sample: # To run with 100k data
     if random:
         df = pd.read_csv('./data/train-100000',dtype={'id':pd.np.string_})
-        df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
-        train, test = df[df['is_train']==True], df[df['is_train']==False]
+        train, test = utils.random_train_test_split(df)
     else: # Use data set that is pre-randomized and splitted.
         train = pd.read_csv('./data/train-100000R',dtype={'id':pd.np.string_})
         test = pd.read_csv('./data/test-100000R',dtype={'id':pd.np.string_})

@@ -4,6 +4,7 @@ import csv
 import numpy as np
 import os
 import itertools
+import utils
 
 from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
@@ -23,8 +24,7 @@ myid = 'ImageId'
 # Load data
 if sample: # To run with 5k data
     df = pd.read_csv('./data/train-1000.csv')
-    df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
-    train, test = df[df['is_train']==True], df[df['is_train']==False]
+    train, test = utils.random_train_test_split(df)
 else:
     # To run with real data
     train = pd.read_csv('./data/train.csv')
