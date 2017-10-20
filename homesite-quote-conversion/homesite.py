@@ -118,9 +118,9 @@ def process_data(train, test, features):
     # Scale features
     scaler = StandardScaler()
     for col in ['Field8', 'Field9', 'Field10', 'Field11', 'SalesField8']:  # need to be scaled
-        scaler.fit(list(train[col]) + list(test[col]))
-        train[col] = scaler.transform(train[col])
-        test[col] = scaler.transform(test[col])
+        scaler.fit(np.reshape((list(train[col])+list(test[col])), (-1, 1))
+        train[col] = scaler.transform(np.reshape(train[col], (-1,1)))
+        test[col] = scaler.transform(np.reshape(test[col], (-1,1)))
 
     return (train, test, features)
 
@@ -152,12 +152,12 @@ def XGB_native(train, test, features):
     predictions_df = pd.DataFrame()
     predictions_df[myid] = test[myid]
     predictions_df[goal] = pred
-    predictions_df = predictions_df.sort(columns=myid, ascending=True)
+    predictions_df = predictions_df.sort_values(by=myid, axis = 'index', ascending=True)
     csvfile = "./result/dat-xgb_d%s_eta%s_ntree%s_mcw%s_%sfeatures.csv" % (
     str(depth), str(eta), str(ntrees), str(mcw), str(len(features)))
     predictions_df.to_csv(csvfile, index=False)
 
-
+                   
 def main():
     print "=> Loading data - " + str(datetime.datetime.now())
     train, test, features = load_data()

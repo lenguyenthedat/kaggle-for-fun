@@ -17,15 +17,14 @@ y = train.target.values
 train = train.drop(['ID', 'target'], axis=1)
 test = test.drop('ID', axis=1)
 
-train = train.dropna(axis=1, thresh=2000)
-test = test.dropna(axis=1, thresh=2000)
+train = train.dropna(axis=1)
+test = test.dropna(axis=1)
 
 train = train.fillna(-1)
 test = test.fillna(-1)
 
 for f in train.columns:
     if train[f].dtype=='object':
-        print f
         lbl = preprocessing.LabelEncoder()
         lbl.fit(list(train[f].values) + list(test[f].values))
         train[f] = lbl.transform(list(train[f].values))

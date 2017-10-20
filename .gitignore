@@ -1,13 +1,9 @@
 sample_solution.csv
-train.csv
 train.gz
 train.zip
 test.gz
-test.csv
 result
 train.csv.zip
 test.csv.zip
-springleaf-marketing-response/data/
-rossmann-store-sales/data/
 xgb.fmap
 Feature_Importance_*.png

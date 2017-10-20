@@ -42,9 +42,9 @@ else:
 # Neural Network, Stochastic Gradient Descent is sensitive to feature scaling, so it is highly recommended to scale your data.
 scaler = StandardScaler()
 for col in features:
-    scaler.fit(list(train[col])+list(test[col]))
-    train[col] = scaler.transform(train[col])
-    test[col] = scaler.transform(test[col])
+    scaler.fit(np.reshape(list(train[col])+list(test[col]), (-1,1)))
+    train[col] = scaler.transform(np.reshape(train[col], (-1,1)))
+    test[col] = scaler.transform(np.reshape(test[col], (-1,1)))
 
 # Define classifiers
 
