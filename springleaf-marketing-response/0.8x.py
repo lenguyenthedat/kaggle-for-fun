@@ -8,11 +8,10 @@ Beating the benchmark @ Kaggle Springleaf
 import pandas as pd
 import numpy as np
 import xgboost as xgb
+import utils
 from sklearn import preprocessing, linear_model
 
-
-train = pd.read_csv('data/train.csv')
-test = pd.read_csv('data/test.csv')
+train, test = utils.read_csv_files('data/train.csv', 'data/test.csv')
 
 y = train.target.values
 train = train.drop(['ID', 'target'], axis=1)

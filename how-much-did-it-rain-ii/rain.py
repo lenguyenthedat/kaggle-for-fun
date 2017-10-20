@@ -10,6 +10,7 @@ import xgboost as xgb
 import itertools
 import operator
 import warnings
+import utils
 warnings.filterwarnings("ignore")
 
 from sklearn.preprocessing import StandardScaler
@@ -29,12 +30,10 @@ def load_data():
         Load data and specified features of the data sets
     """
     if preprocessing:
-        train_org = pd.read_csv('./data/train.csv')
-        test_org = pd.read_csv('./data/test.csv')
+        train_org, test_org = utils.read_csv_files('./data/train.csv', './data/test.csv')
     else:
-        train_org = pd.read_csv('./data/train_agg.csv')
-        test_org = pd.read_csv('./data/test_agg.csv')
-    return (train_org,test_org)
+        train_org, test_org = utils.read_csv_files('./data/train_agg.csv', './data/test_agg.csv')
+    return train_org, test_org
 
 def process_data(train_org,test_org):
     """
